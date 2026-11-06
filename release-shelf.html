@@ -39,7 +39,8 @@
   .rs-meta { margin: 0; font-size: 12px; color: #a1a1aa; }
   .rs-msg { font-size: 14px; color: #c4c4cc; margin: 4px 16px 0 0; line-height: 1.5; }
   .rs-msg a { color: #f26b6b; font-weight: 600; }
-  button.rs-item { background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; }
+  button.rs-item { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; align-self: flex-start; display: block; }
+  .rs-row { align-items: flex-start; }
   .rs-name, .rs-meta { display: block; }
   .rs-name { display: -webkit-box; }
   .rs-play { position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(5,5,5,.72);
@@ -258,7 +259,7 @@
     lastBtn = btn; shelfTitle = $('rs-title').textContent; shelfHint = $('rs-hint').textContent;
     $('rs-title').textContent = 'Now playing'; $('rs-hint').textContent = '';
     var now = $('rs-now'); now.textContent = '';
-    var back = el('button', 'rs-back', '← Back to ' + (shelfTitle ? shelfTitle.toLowerCase().replace(/^newest /, '') : plural));
+    var back = el('button', 'rs-back', '← Back to ' + plural);
     back.type = 'button'; back.addEventListener('click', stop);
     now.appendChild(back);
     var f = el('iframe');
