@@ -50,6 +50,19 @@
     background: #111115; color: #e4e4e7; font: 500 13px 'Plus Jakarta Sans', Arial, sans-serif; cursor: pointer; }
   .rs-back:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
   .rs-now iframe { border: 0; width: 100%; border-radius: 10px; background: #050505; display: block; }
+  .rs-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; flex: 1; min-height: 0; }
+  .rs-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .rs-desc { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; padding-right: 6px; }
+  .rs-desc-title { margin: 0 0 6px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; }
+  .rs-desc p { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: #d4d4d8; }
+  .rs-desc .rs-genre { margin: 0 0 8px; font-size: 12px; color: #a1a1aa; }
+  .rs-col iframe { flex: none; }
+  @media (max-width: 560px) {   /* phones: player on top, story underneath, the whole view scrolls */
+    .rs-split { display: flex; flex-direction: column; overflow-y: auto; gap: 14px; }
+    .rs-col, .rs-desc { flex: none; overflow: visible; }
+    .rs-col iframe { flex: none !important; height: 120px; }
+    .rs-col iframe.rs-album { height: 220px; }
+  }
   .rs-note { margin: 0; font-size: 12px; color: #a1a1aa; }
   .rs-note a { color: #f26b6b; font-weight: 600; text-decoration: none; }
 </style>
@@ -183,7 +196,7 @@
       if (bc) {                                                  // full songs play right here on Bandcamp
         a = el('button', 'rs-item'); a.type = 'button';
         a.setAttribute('aria-label', 'Play ' + name + ' on Bandcamp');
-        a.addEventListener('click', (function (name, bc, btn) { return function () { play(name, bc, btn); }; })(name, bc, a));
+        a.addEventListener('click', (function (name, bc, btn, row) { return function () { play(name, bc, btn, row); }; })(name, bc, a, r));
       } else {
         a = el('a', 'rs-item'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
         a.setAttribute('aria-label', name + ', opens in a new tab');
@@ -241,7 +254,7 @@
 
   /* "Now playing": the shelf row steps aside for the Bandcamp player, with a Back button. */
   var shelfTitle = '', shelfHint = '', lastBtn = null;
-  function play(name, bc, btn) {
+  function play(name, bc, btn, row) {
     lastBtn = btn; shelfTitle = $('rs-title').textContent; shelfHint = $('rs-hint').textContent;
     $('rs-title').textContent = 'Now playing'; $('rs-hint').textContent = '';
     var now = $('rs-now'); now.textContent = '';
@@ -252,13 +265,27 @@
     f.src = bc.src;                                              // only a rebuilt bandcamp.com player address is ever used
     f.title = 'Listen to ' + name + ' on Bandcamp';
     f.setAttribute('seamless', '');
-    if (bc.album) { f.style.flex = '1'; f.style.minHeight = '140px'; } else f.style.height = '120px';
-    now.appendChild(f);
+    if (bc.album) { f.className = 'rs-album'; f.style.flex = '1'; f.style.minHeight = '140px'; } else f.style.height = '120px';
+    var split = el('div', 'rs-split'), left = el('div', 'rs-col'), right = el('div', 'rs-desc');
+    left.appendChild(f);
     var note = el('p', 'rs-note', 'Full songs on Bandcamp. ');
     if (bc.page) { var a = el('a', null, 'Open on Bandcamp'); a.href = bc.page; a.target = '_blank'; a.rel = 'noopener'; note.appendChild(a); }
-    now.appendChild(note);
+    left.appendChild(note);
+    /* The song's story from the Song Database (song_description), shown as plain text. */
+    right.appendChild(el('p', 'rs-desc-title', name));
+    var bits = [row && row.song_genre, row && row.release_date ? fmtDate(row.release_date) : ''].filter(Boolean);
+    if (bits.length) right.appendChild(el('p', 'rs-genre', bits.join(' · ')));
+    var text = String((row && row.song_description) || '').trim();
+    if (text) text.split(/\n\s*\n|\r?\n/).forEach(function (para) { if (para.trim()) right.appendChild(el('p', null, para.trim())); });
+    else right.appendChild(el('p', null, 'The story behind this song is coming soon.'));
+    split.appendChild(left); split.appendChild(right);
+    now.appendChild(split);
     $('rs-row').style.display = 'none'; now.style.display = 'flex';
     back.focus();
+  }
+  function fmtDate(iso) {
+    var d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }
   function stop() {
     var now = $('rs-now'); if (now.style.display !== 'flex') return;
