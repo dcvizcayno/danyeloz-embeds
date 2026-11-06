@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Write Me a Letter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Write Me a Letter card (Connect page)
+     An invitation card. The button opens your Cognito form in a new tab.
+     Embed in Google Sites with Insert > Embed (Whole page):
+       https://dcvizcayno.github.io/danyeloz-embeds/letter.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #lt { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505; border-radius: 16px;
+    padding: 20px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  #lt * { box-sizing: border-box; }
+  .lt-top { display: flex; align-items: center; gap: 14px; }
+  .lt-icon { width: 46px; height: 46px; border-radius: 12px; background: #2a1416; display: flex; align-items: center; justify-content: center; flex: none; }
+  .lt-icon svg { width: 24px; height: 24px; }
+  .lt-h { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.25; }
+  .lt-p { margin: 0; font-size: 14px; line-height: 1.6; color: #d4d4d8; }
+  .lt-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .lt-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; color: #e4e4e7;
+    background: #111115; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px 12px; }
+  .lt-list b { color: #f8a5a5; font-weight: 600; flex: none; }
+  .lt-foot { margin-top: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .lt-btn { height: 46px; padding: 0 26px; border-radius: 12px; background: #D3413F; color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; }
+  .lt-btn:hover { background: #e0504d; }
+  .lt-btn:focus-visible { outline: 2px solid #f26b6b; outline-offset: 3px; }
+  .lt-note { margin: 0; font-size: 12px; color: #a1a1aa; }
+</style>
+
+<div id="lt">
+  <div class="lt-top">
+    <span class="lt-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+    <p class="lt-h" id="lt-h"></p>
+  </div>
+  <p class="lt-p" id="lt-p"></p>
+  <ul class="lt-list" id="lt-list"></ul>
+  <div class="lt-foot">
+    <a class="lt-btn" id="lt-btn" target="_blank" rel="noopener"></a>
+    <p class="lt-note" id="lt-note"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var FORM_URL = 'https://www.cognitoforms.com/DanyelOZ/ContactCollaborations';
+  var HEADING  = 'Your story might turn into a song';
+  var INTRO    = 'How you feel, a memory, a moment that stuck with you. Write it down and send it my way.';
+  var IDEAS    = [                          // short prompts shown as cards; [] to hide
+    ['Letters', 'A feeling, a memory, a moment you can’t shake.'],
+    ['Collabs', 'Writers, producers, artists: let’s make something.'],
+    ['Hello', 'Questions, feedback, or just saying hi.']
+  ];
+  var BUTTON   = 'Write me a letter';
+  var NOTE     = 'I read every one.';
+  /* ============================================ */
+
+  function $(id) { return document.getElementById(id); }
+  $('lt-h').textContent = HEADING;
+  $('lt-p').textContent = INTRO;
+  IDEAS.forEach(function (x) {
+    var li = document.createElement('li'), b = document.createElement('b');
+    b.textContent = x[0]; li.appendChild(b); li.appendChild(document.createTextNode(x[1]));
+    $('lt-list').appendChild(li);
+  });
+  if (!IDEAS.length) $('lt-list').style.display = 'none';
+  var btn = $('lt-btn');
+  btn.href = /^https:\/\//.test(FORM_URL) ? FORM_URL : '#';
+  btn.textContent = BUTTON;
+  btn.setAttribute('aria-label', BUTTON + ', opens in a new tab');
+  btn.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>');
+  $('lt-note').textContent = NOTE;
+})();
+</script>
+
+</body>
+</html>
