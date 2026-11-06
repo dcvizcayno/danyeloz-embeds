@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Danyel OZ · Listen Everywhere</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#d4433f;font-family:'Open Sans',sans-serif;color:#fff}
+  .ft{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 48px;box-sizing:border-box;min-height:52px}
+  .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .label{font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.12em;font-size:15px;margin-right:8px;white-space:nowrap}
+  .pill{background:#fff;color:#c0302c;text-decoration:none;font-size:13px;font-weight:600;padding:6px 12px;border-radius:5px;white-space:nowrap;transition:transform .12s,box-shadow .12s}
+  .pill:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.2)}
+  .more{background:none;border:0;color:#fff;font:600 13px 'Open Sans',sans-serif;text-decoration:underline;cursor:pointer;padding:6px 4px}
+  .extra{display:none}
+  .open .extra{display:inline-block}
+  .copy{font-size:12.5px;white-space:nowrap;opacity:.95}
+  @media (max-width:640px){.ft{padding:12px 18px}.copy{width:100%}}
+</style>
+</head>
+<body>
+<div class="ft">
+  <div class="left" id="left">
+    <span class="label">LISTEN EVERYWHERE</span>
+  </div>
+  <div class="copy">© <span id="yr"></span> Danyel OZ, LLC.</div>
+</div>
+<script>
+// First four show as pills. The rest open in place behind "+N more".
+const LINKS = [
+  ['Spotify','https://open.spotify.com/artist/2rXzK2nhFFclSWxkpJ9XYn'],
+  ['Apple Music','https://music.apple.com/us/artist/danyel-oz/1706653995'],
+  ['YouTube Music','https://music.youtube.com/channel/UCmvCshUQAXm1aoWRAnOSTaA'],
+  ['Bandcamp','https://danyeloz.bandcamp.com/'],
+  ['Amazon Music','https://music.amazon.co.uk/artists/B0CHPN3VXK/danyel-oz'],
+  ['Deezer','https://www.deezer.com/us/artist/229950385'],
+  ['YouTube','https://www.youtube.com/@danyeloz1554'],
+  ['Pandora','https://pandora.app.link/LDAB4AIDeTb'],
+  ['Audiomack','https://audiomack.com/danyeloz'],
+  ['Boomplay','https://www.boomplay.com/artists/76695732']
+];
+const SHOW = 4;
+const left = document.getElementById('left');
+LINKS.forEach(([name,url],i)=>{
+  const a=document.createElement('a');
+  a.className='pill'+(i>=SHOW?' extra':''); a.href=url; a.target='_blank'; a.rel='noopener'; a.textContent=name;
+  left.appendChild(a);
+});
+if (LINKS.length>SHOW){
+  const b=document.createElement('button'); b.className='more';
+  const extra=LINKS.length-SHOW;
+  b.textContent='+'+extra+' more';
+  b.onclick=()=>{const o=left.classList.toggle('open'); b.textContent=o?'Show less':'+'+extra+' more';};
+  left.appendChild(b);
+}
+document.getElementById('yr').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
