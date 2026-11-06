@@ -14,6 +14,7 @@ Each page has a **Settings** block at the top of its script.
 | `upcoming-details.html` | Upcoming Release: song details |
 | `featured-videos.html` | Featured Videos |
 | `explore-music.html` | Explore the Music |
+| `music-highlights.html` | Music Highlights (music_highlights tab) |
 
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
 The data entry app lives in the private repo `DanyelOZ-Official-Website`.
