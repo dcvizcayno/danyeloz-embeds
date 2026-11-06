@@ -15,6 +15,7 @@
        Upcoming singles how many singles are scheduled, and when the next one lands
        Upcoming album   the next album (or EP, if no album is scheduled)
        1000 Songs       every row in the Song Database counts toward the goal
+       Demos Vault      links to your Unfinished Demos Vault pages
        Release calendar the rest of the schedule
      Embed in Google Sites with Insert > Embed > By URL (Whole page):
        https://dcvizcayno.github.io/danyeloz-embeds/in-progress.html -->
@@ -35,6 +36,12 @@
     color: #050505; text-decoration: none; font-weight: 600; font-size: 13px; }
   .ip-btn:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
   .ip-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex: none; }
+  a.ip-card { text-decoration: none; color: inherit; display: flex; }
+  a.ip-card:hover { background: #111115; }
+  a.ip-card:focus-visible, a.ip-row:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
+  a.ip-row { text-decoration: none; color: inherit; }
+  a.ip-row:hover { background: #111115; }
+  .ip-chev { width: 16px; height: 16px; flex: none; }
   .ip-tile { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-height: 92px; }
   .ip-tile svg { width: 20px; height: 20px; flex: none; }
   .ip-tile-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -62,6 +69,13 @@
   var GOAL       = 1000;        // the 1000 Songs goal
   var SONG_COUNT = 'auto';      // 'auto' = every row in the Song Database, or type a number
   var CAL_ROWS   = 5;           // how many later releases the calendar lists
+  var SITE       = 'https://www.danyeloz.info/behind-the-scenes/in-progress';   // your In-Progress pages (open in a new tab)
+  var PAGES      = { singles: '/upcoming-singles', album: '/upcoming-album', songs: '/1000-songs' };
+  var VAULT      = [                                         // Unfinished Demos Vault rows: name, note, page
+    ['Early demos', 'First takes and voice memos', '/unfinished-demos-vault/early-demos'],
+    ['Unreleased drafts', 'Songs still finding their shape', '/unfinished-demos-vault/unreleased-drafts'],
+    ['Finished, Unfinished', 'Done, but not released', '/unfinished-demos-vault/finished-unfinished']
+  ];
   var PRESAVE    = ['bandcamp', 'spotify_link', 'appl_music_link', 'yt_video_link', 'amazon_link'];  // first valid one wins
   /* ============================================ */
 
@@ -116,7 +130,13 @@
     var days = Math.round((d - new Date(new Date().toDateString())) / 86400000);
     return days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
   }
+  function link(path, cls, label) {
+    var a = el('a', cls); a.href = SITE + path; a.target = '_blank'; a.rel = 'noopener';
+    a.setAttribute('aria-label', label + ', opens in a new tab');
+    return a;
+  }
   var ICONS = {
+    chev: '<svg class="ip-chev" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     disc: '<svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>'
   };
@@ -155,7 +175,7 @@
     /* Tiles */
     var tiles = el('div', 'ip-tiles');
     var singles = next.filter(function (x) { return x.type === 'Single'; });
-    var t1 = el('div', 'ip-card ip-tile'); t1.insertAdjacentHTML('beforeend', ICONS.note);
+    var t1 = link(PAGES.singles, 'ip-card ip-tile', 'Upcoming singles'); t1.insertAdjacentHTML('beforeend', ICONS.note);
     t1.appendChild(el('p', 'ip-t', 'Upcoming Singles'));
     t1.appendChild(el('p', 'ip-s', singles.length
       ? singles.length + ' scheduled · every 2 weeks · next ' + fmt(singles[0].d)
@@ -163,14 +183,14 @@
     tiles.appendChild(t1);
 
     var album = next.filter(function (x) { return x.type === 'Album'; })[0] || next.filter(function (x) { return x.type === 'EP'; })[0];
-    var t2 = el('div', 'ip-card ip-tile'); t2.insertAdjacentHTML('beforeend', ICONS.disc);
+    var t2 = link(PAGES.album, 'ip-card ip-tile', 'Upcoming album'); t2.insertAdjacentHTML('beforeend', ICONS.disc);
     t2.appendChild(el('p', 'ip-t', album && album.type === 'EP' ? 'Upcoming EP' : 'Upcoming Album'));
     t2.appendChild(el('p', 'ip-s', album ? album.r.song_title + ' · ' + fmt(album.d) : 'The next full story'));
     tiles.appendChild(t2);
 
     var count = String(SONG_COUNT).toLowerCase() === 'auto' ? rows.filter(function (r) { return (r.song_title || '').trim(); }).length : Number(SONG_COUNT) || 0;
     var pct = Math.max(0, Math.min(100, count / GOAL * 100));
-    var t3 = el('div', 'ip-card ip-tile');
+    var t3 = link(PAGES.songs, 'ip-card ip-tile', 'The 1000 Songs project');
     var top = el('div', 'ip-tile-top'); top.appendChild(el('p', 'ip-t', GOAL + ' Songs')); top.appendChild(el('p', 'ip-count', count + ' / ' + GOAL));
     t3.appendChild(top);
     t3.appendChild(el('p', 'ip-s', 'The long game · ' + Math.round(pct) + '% there'));
@@ -179,6 +199,19 @@
     var fill = el('div'); fill.style.width = pct + '%'; bar.appendChild(fill); t3.appendChild(bar);
     tiles.appendChild(t3);
     box.appendChild(tiles);
+
+    /* Unfinished Demos Vault */
+    if (VAULT.length) {
+      var v = el('div', 'ip-card ip-cal');
+      v.appendChild(el('p', 'ip-cal-h', 'Unfinished Demos Vault'));
+      VAULT.forEach(function (x) {
+        var row = link(x[2], 'ip-row', x[0]);
+        var w = el('p', 'ip-what', x[0] + ' '); w.appendChild(el('span', null, '· ' + x[1]));
+        row.appendChild(w); row.insertAdjacentHTML('beforeend', ICONS.chev);
+        v.appendChild(row);
+      });
+      box.appendChild(v);
+    }
 
     /* Release calendar */
     var later = next.slice(1, 1 + CAL_ROWS);
