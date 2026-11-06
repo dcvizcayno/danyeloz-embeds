@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: In Progress</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: In Progress (Behind the Scenes page)
+     Everything here comes from the Song Database, so it keeps itself up to date:
+       Coming next      the nearest release dated after today, with a Pre-save button (its Bandcamp page)
+       Upcoming singles how many singles are scheduled, and when the next one lands
+       Upcoming album   the next album (or EP, if no album is scheduled)
+       1000 Songs       every row in the Song Database counts toward the goal
+       Release calendar the rest of the schedule
+     Embed in Google Sites with Insert > Embed > By URL (Whole page):
+       https://dcvizcayno.github.io/danyeloz-embeds/in-progress.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #ip { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; height: 100%; display: flex; flex-direction: column;
+    gap: 12px; box-sizing: border-box; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+  #ip * { box-sizing: border-box; }
+  .ip-card { background: #050505; border-radius: 14px; }
+  .ip-next { padding: 12px 14px; display: flex; align-items: center; gap: 14px; flex: none; }
+  .ip-art { width: 52px; height: 52px; border-radius: 9px; background: #3a1d2a center / cover no-repeat; flex: none;
+    display: flex; align-items: center; justify-content: center; }
+  .ip-art svg { width: 22px; height: 22px; }
+  .ip-label { margin: 0; font-size: 12px; font-weight: 600; color: #f8a5a5; }
+  .ip-name { margin: 1px 0 0; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ip-date { margin: 1px 0 0; font-size: 12px; color: #c4c4cc; }
+  .ip-btn { flex: none; height: 38px; padding: 0 14px; display: flex; align-items: center; border-radius: 10px; background: #f4f4f6;
+    color: #050505; text-decoration: none; font-weight: 600; font-size: 13px; }
+  .ip-btn:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
+  .ip-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex: none; }
+  .ip-tile { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-height: 92px; }
+  .ip-tile svg { width: 20px; height: 20px; flex: none; }
+  .ip-tile-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .ip-t { margin: 0; font-weight: 600; font-size: 14px; }
+  .ip-s { margin: 0; font-size: 12px; color: #a1a1aa; line-height: 1.4; }
+  .ip-count { margin: 0; font-size: 12px; color: #c4c4cc; white-space: nowrap; }
+  .ip-bar { margin-top: auto; height: 8px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .ip-bar div { height: 100%; background: #F34F4C; border-radius: 999px; min-width: 6px; }
+  .ip-cal { overflow: hidden; flex: none; }
+  .ip-cal-h { margin: 0; padding: 10px 16px 6px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 15px; }
+  .ip-row { display: flex; align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid rgba(255,255,255,.08); }
+  .ip-row:last-child { padding-bottom: 11px; }
+  .ip-when { width: 56px; flex: none; font-size: 12px; font-weight: 600; color: #f26b6b; }
+  .ip-what { margin: 0; flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ip-what span { font-weight: 400; font-size: 12px; color: #a1a1aa; }
+  .ip-msg { margin: 0; padding: 14px 16px; font-size: 14px; color: #c4c4cc; }
+  @media (max-width: 520px) { .ip-tiles { grid-template-columns: 1fr; } .ip-tile { min-height: 0; } }
+</style>
+
+<div id="ip"><div class="ip-card"><p class="ip-msg">Loading…</p></div></div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var GOAL       = 1000;        // the 1000 Songs goal
+  var SONG_COUNT = 'auto';      // 'auto' = every row in the Song Database, or type a number
+  var CAL_ROWS   = 5;           // how many later releases the calendar lists
+  var PRESAVE    = ['bandcamp', 'spotify_link', 'appl_music_link', 'yt_video_link', 'amazon_link'];  // first valid one wins
+  /* ============================================ */
+
+  var SHEET_ID  = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
+  var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
+  var BANDCAMP  = 'https://danyeloz.bandcamp.com/';
+  var OK = {
+    spotify_link:    /^https:\/\/(open\.spotify\.com|spotify\.link)\//i,
+    appl_music_link: /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i,
+    yt_video_link:   /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i,
+    amazon_link:     /^https:\/\/(music\.)?amazon\.[a-z.]+\/|^https:\/\/amzn\.to\//i
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return rows.filter(function (r) { return r.join('').trim(); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
+    });
+  }
+  function driveArt(link) {
+    var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w200' : '';
+  }
+  function bandcampPage(code) {
+    var m = String(code || '').match(/href\s*=\s*["'](https:\/\/[\w-]+\.bandcamp\.com\/[\w\/.-]+)["']/i);
+    return m ? m[1] : '';
+  }
+  function presave(r) {
+    for (var k = 0; k < PRESAVE.length; k++) {
+      var key = PRESAVE[k];
+      if (key === 'bandcamp') { var bc = bandcampPage(r.bandcamp_embed); if (bc) return bc; continue; }
+      var v = String(r[key] || '').trim();
+      if (v && OK[key] && OK[key].test(v)) return v;
+    }
+    return BANDCAMP;
+  }
+  function fmt(d, long) {
+    return d.toLocaleDateString('en-US', long ? { month: 'long', day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric' });
+  }
+  function untilText(d) {
+    var days = Math.round((d - new Date(new Date().toDateString())) / 86400000);
+    return days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
+  }
+  var ICONS = {
+    note: '<svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    disc: '<svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>'
+  };
+
+  fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).then(function (rows) {
+    var today = new Date(); today.setHours(23, 59, 59, 999);
+    var next = rows.map(function (r) {
+      var d = r.release_date ? new Date(r.release_date + 'T00:00:00') : null;
+      return { r: r, d: d, type: { single: 'Single', ep: 'EP', album: 'Album' }[String(r.release_type || '').toLowerCase()] };
+    }).filter(function (x) { return x.type && x.d && !isNaN(x.d) && x.d > today; })
+      .sort(function (a, b) { return a.d - b.d; });
+
+    var box = $('ip'); box.textContent = '';
+
+    /* Coming next */
+    var card = el('div', 'ip-card ip-next');
+    if (next.length) {
+      var n = next[0], art = el('div', 'ip-art'), a = driveArt(n.r.song_arts);
+      art.innerHTML = ICONS.note;                                         // shows until (or unless) the cover loads
+      if (a) { var probe = new Image(); probe.onload = function () { art.innerHTML = ''; art.style.backgroundImage = 'url("' + a + '")'; }; probe.src = a; }
+      art.setAttribute('role', 'img'); art.setAttribute('aria-label', n.r.song_title + ' cover');
+      card.appendChild(art);
+      var t = el('div'); t.style.flex = '1'; t.style.minWidth = '0';
+      t.appendChild(el('p', 'ip-label', 'Coming next · ' + n.type));
+      t.appendChild(el('p', 'ip-name', n.r.song_title));
+      t.appendChild(el('p', 'ip-date', 'Out ' + fmt(n.d, true) + ' · ' + untilText(n.d)));
+      card.appendChild(t);
+      var b = el('a', 'ip-btn', 'Pre-save'); b.href = presave(n.r); b.target = '_blank'; b.rel = 'noopener';
+      b.setAttribute('aria-label', 'Pre-save ' + n.r.song_title + ', opens in a new tab');
+      card.appendChild(b);
+    } else {
+      card.appendChild(el('p', 'ip-msg', 'New music is on the way. Check back soon.'));
+    }
+    box.appendChild(card);
+
+    /* Tiles */
+    var tiles = el('div', 'ip-tiles');
+    var singles = next.filter(function (x) { return x.type === 'Single'; });
+    var t1 = el('div', 'ip-card ip-tile'); t1.insertAdjacentHTML('beforeend', ICONS.note);
+    t1.appendChild(el('p', 'ip-t', 'Upcoming Singles'));
+    t1.appendChild(el('p', 'ip-s', singles.length
+      ? singles.length + ' scheduled · every 2 weeks · next ' + fmt(singles[0].d)
+      : 'Every 2 weeks'));
+    tiles.appendChild(t1);
+
+    var album = next.filter(function (x) { return x.type === 'Album'; })[0] || next.filter(function (x) { return x.type === 'EP'; })[0];
+    var t2 = el('div', 'ip-card ip-tile'); t2.insertAdjacentHTML('beforeend', ICONS.disc);
+    t2.appendChild(el('p', 'ip-t', album && album.type === 'EP' ? 'Upcoming EP' : 'Upcoming Album'));
+    t2.appendChild(el('p', 'ip-s', album ? album.r.song_title + ' · ' + fmt(album.d) : 'The next full story'));
+    tiles.appendChild(t2);
+
+    var count = String(SONG_COUNT).toLowerCase() === 'auto' ? rows.filter(function (r) { return (r.song_title || '').trim(); }).length : Number(SONG_COUNT) || 0;
+    var pct = Math.max(0, Math.min(100, count / GOAL * 100));
+    var t3 = el('div', 'ip-card ip-tile');
+    var top = el('div', 'ip-tile-top'); top.appendChild(el('p', 'ip-t', GOAL + ' Songs')); top.appendChild(el('p', 'ip-count', count + ' / ' + GOAL));
+    t3.appendChild(top);
+    t3.appendChild(el('p', 'ip-s', 'The long game · ' + Math.round(pct) + '% there'));
+    var bar = el('div', 'ip-bar'); bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-label', 'Songs written out of ' + GOAL);
+    bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', String(GOAL)); bar.setAttribute('aria-valuenow', String(count));
+    var fill = el('div'); fill.style.width = pct + '%'; bar.appendChild(fill); t3.appendChild(bar);
+    tiles.appendChild(t3);
+    box.appendChild(tiles);
+
+    /* Release calendar */
+    var later = next.slice(1, 1 + CAL_ROWS);
+    if (later.length) {
+      var cal = el('div', 'ip-card ip-cal');
+      cal.appendChild(el('p', 'ip-cal-h', 'Release calendar'));
+      later.forEach(function (x) {
+        var row = el('div', 'ip-row');
+        row.appendChild(el('span', 'ip-when', fmt(x.d)));
+        var w = el('p', 'ip-what', x.r.song_title + ' '); w.appendChild(el('span', null, '· ' + x.type));
+        row.appendChild(w);
+        cal.appendChild(row);
+      });
+      box.appendChild(cal);
+    }
+  }).catch(function () {
+    var box = $('ip'); box.textContent = '';
+    var c = el('div', 'ip-card'); c.appendChild(el('p', 'ip-msg', 'The schedule is taking a moment to load.')); box.appendChild(c);
+  });
+})();
+</script>
+
+</body>
+</html>

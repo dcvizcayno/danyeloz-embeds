@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: My Tiny Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: My Tiny Desk card (Behind the Scenes page)
+     Your Tiny Desk photo with a play button. While VIDEO is empty it says "Coming soon".
+     Put a YouTube video or playlist link in VIDEO and the card plays it right here.
+     Embed in Google Sites with Insert > Embed > By URL (Whole page):
+       https://dcvizcayno.github.io/danyeloz-embeds/tiny-desk.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #td { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505; border-radius: 16px;
+    overflow: hidden; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+  #td * { box-sizing: border-box; }
+  .td-media { position: relative; flex: 1; min-height: 160px; background: #1c2421 center 30% / cover no-repeat; border: 0; padding: 0;
+    display: flex; align-items: center; justify-content: center; width: 100%; font: inherit; color: inherit; }
+  button.td-media { cursor: pointer; }
+  button.td-media:focus-visible { outline: 2px solid #f26b6b; outline-offset: -4px; }
+  .td-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,5,5,.05), rgba(5,5,5,.45)); }
+  .td-play { position: relative; z-index: 1; width: 68px; height: 68px; border-radius: 50%; background: #f4f4f6; color: #050505;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
+  .td-play svg { width: 24px; height: 24px; margin-left: 3px; }
+  .td-soon { position: absolute; z-index: 1; top: 14px; left: 14px; background: #D3413F; color: #fff; font-size: 11px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase; padding: 5px 9px; border-radius: 7px; }
+  .td-media iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 2; }
+  .td-foot { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none; }
+  .td-title { margin: 0 0 2px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 19px; }
+  .td-sub { margin: 0; font-size: 13px; color: #c4c4cc; line-height: 1.45; }
+  .td-pill { flex: none; height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 10px; background: #D3413F;
+    color: #fff; font-weight: 600; font-size: 13px; }
+  .td-pill.soon { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); color: #e4e4e7; }
+</style>
+
+<div id="td">
+  <div class="td-media" id="td-media"></div>
+  <div class="td-foot">
+    <div><p class="td-title" id="td-title"></p><p class="td-sub" id="td-sub"></p></div>
+    <span class="td-pill" id="td-pill"></span>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var PHOTO    = 'images/tiny-desk.jpg';   // the card's photo: images/tiny-desk.jpg in this repo, any https image link, or a Google Drive share link
+  var VIDEO    = '';            // YouTube video or playlist link. Empty = "Coming soon"
+  var TITLE    = 'Tiny desk sessions';
+  var SUBTITLE = 'Stripped-down songs, recorded right at my desk.';
+  /* ============================================ */
+
+  function $(id) { return document.getElementById(id); }
+  function imageUrl(u) {                                   // Drive share links become a direct thumbnail
+    var m = String(u || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000' : u;
+  }
+  /* Only a YouTube video id or playlist id is kept, then a youtube-nocookie player address is rebuilt. */
+  function youtube(link) {
+    var s = String(link || '');
+    var list = (s.match(/[?&]list=([\w-]{10,})/) || [])[1];
+    var vid = (s.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/) || [])[1];
+    if (!list && !vid) return '';
+    return 'https://www.youtube-nocookie.com/embed/' + (vid || 'videoseries') + '?autoplay=1&rel=0' + (list ? '&list=' + list : '');
+  }
+
+  $('td-title').textContent = TITLE;
+  $('td-sub').textContent = SUBTITLE;
+  var player = youtube(VIDEO), media = $('td-media');
+  var photo = imageUrl(PHOTO);
+  if (/^(https:\/\/|images\/)/.test(photo)) media.style.backgroundImage = 'url("' + photo.replace(/"/g, '%22') + '")';
+
+  var play = document.createElement('span'); play.className = 'td-play'; play.setAttribute('aria-hidden', 'true');
+  play.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l11 7-11 7z"/></svg>';
+
+  if (player) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'td-media'; b.id = 'td-media';
+    b.style.backgroundImage = media.style.backgroundImage;
+    b.setAttribute('aria-label', 'Play ' + TITLE);
+    b.appendChild(play);
+    b.addEventListener('click', function () {
+      var f = document.createElement('iframe');
+      f.src = player; f.title = TITLE; f.allow = 'autoplay; encrypted-media; picture-in-picture'; f.allowFullscreen = true;
+      b.appendChild(f); b.disabled = true;
+    });
+    media.parentNode.replaceChild(b, media);
+    $('td-pill').textContent = 'Watch sessions';
+  } else {
+    media.setAttribute('role', 'img'); media.setAttribute('aria-label', TITLE + ', coming soon');
+    media.appendChild(play);
+    var soon = document.createElement('span'); soon.className = 'td-soon'; soon.textContent = 'Coming soon'; media.appendChild(soon);
+    $('td-pill').textContent = 'Coming soon'; $('td-pill').className = 'td-pill soon';
+  }
+})();
+</script>
+
+</body>
+</html>

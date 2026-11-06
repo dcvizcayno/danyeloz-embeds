@@ -16,6 +16,8 @@ Each page has a **Settings** block at the top of its script.
 | `explore-music.html` | Explore the Music |
 | `music-highlights.html` | Music Highlights (music_highlights tab) |
 | `explore-releases.html` | Released page: Explore Releases panel with All, Albums, Singles, EPs, Holiday tabs (Sheet1) |
+| `tiny-desk.html` | Behind the Scenes: My Tiny Desk card (photo in `images/`, YouTube link in Settings) |
+| `in-progress.html` | Behind the Scenes: In Progress (coming next, upcoming singles/album, 1000 Songs, release calendar) |
 | `release-shelf.html` | Released page: swipeable shelf, `?type=Single`, `EP` or `Album` (Sheet1) |
 
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
