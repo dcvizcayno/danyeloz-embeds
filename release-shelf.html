@@ -91,7 +91,7 @@
       var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
     });
   }
-  /* Cover from the sheet's song_arts Drive link, used when Apple has no artwork yet (only a checked Drive file id is used). */
+  /* Cover from the sheet's song_arts Drive link. It is used first; Apple's artwork is the backup (only a checked Drive file id is used). */
   function driveArt(link) {
     var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
     return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400' : '';
@@ -165,8 +165,9 @@
       a.setAttribute('aria-label', name + ', opens in a new tab');
       var cover = el('div', 'rs-cover');
       var art = apple && apple.artworkUrl100 ? apple.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
+      if (!(art && ART_OK.test(art))) art = '';
       var drive = driveArt(r.song_arts);
-      if (!(art && ART_OK.test(art))) { art = drive; drive = ''; }      // no Apple artwork yet: use the sheet's cover
+      if (drive) { var appleArt = art; art = drive; drive = appleArt; }  // the Song Database cover always comes first, Apple's is the backup
       if (art) {
         var img = el('img'); img.src = art; img.alt = ''; img.loading = 'lazy';
         img.onerror = (function (img, cover, name, backup) { return function () {

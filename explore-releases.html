@@ -141,7 +141,7 @@
     var m = String(row.appl_music_link || '').match(/\/(\d{6,})(?:[?#]|$)/);
     return m ? m[1] : '';
   }
-  /* Cover from the sheet's song_arts Drive link, used when Apple has no artwork yet (only a checked Drive file id is used). */
+  /* Cover from the sheet's song_arts Drive link. It is used first; Apple's artwork is the backup (only a checked Drive file id is used). */
   function driveArt(link) {
     var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
     return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400' : '';
@@ -177,9 +177,9 @@
     }
     if (!url && a && OK.appl_music_link.test(a.collectionViewUrl || '')) url = a.collectionViewUrl;
     var art = a && a.artworkUrl100 ? a.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
-    var drive = driveArt(r.song_arts);
+    var drive = driveArt(r.song_arts);                               // the Song Database cover always comes first
     art = ART_OK.test(art) ? art : '';
-    return { name: name, url: url || ARTIST_URL, art: art || drive, art2: art ? drive : '', bc: bandcamp(r.bandcamp_embed), it: it };
+    return { name: name, url: url || ARTIST_URL, art: drive || art, art2: drive ? art : '', bc: bandcamp(r.bandcamp_embed), it: it };
   }
 
   /* Reads Bandcamp's embed code and keeps only the album or track number (never runs the pasted HTML).
@@ -203,7 +203,7 @@
     if (info.art) {
       var img = el('img'); img.src = info.art; img.alt = ''; img.loading = 'lazy';
       img.onerror = function () {
-        if (info.art2 && img.src !== info.art2) { img.src = info.art2; return; }  // Apple failed: try the sheet's cover
+        if (info.art2 && img.src !== info.art2) { img.src = info.art2; return; }  // sheet cover failed: try Apple's
         c.removeChild(img); c.insertBefore(el('span', 'ex-alt', info.name), c.firstChild);
       };
       c.appendChild(img);
