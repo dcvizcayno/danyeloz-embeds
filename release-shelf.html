@@ -28,7 +28,7 @@
   .rs-item:focus-visible { outline: 2px solid #f26b6b; outline-offset: 3px; border-radius: 10px; }
   .rs-cover { width: 100%; aspect-ratio: 1; border-radius: 10px; background: #18181b; overflow: hidden; position: relative; }
   .rs-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .rs-cover span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px;
+  .rs-cover .rs-alt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px;
     text-align: center; font-family: 'Outfit', sans-serif; font-size: 15px; color: #d4d4d8; }
   .rs-new { position: absolute; top: 8px; left: 8px; background: #D3413F; color: #fff; font-size: 10px; font-weight: 600;
     letter-spacing: .06em; padding: 3px 7px; border-radius: 6px; }
@@ -91,6 +91,11 @@
       var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
     });
   }
+  /* Cover from the sheet's song_arts Drive link, used when Apple has no artwork yet (only a checked Drive file id is used). */
+  function driveArt(link) {
+    var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400' : '';
+  }
   function appleIdFrom(row) {
     if (/^\d{6,}$/.test(row.song_id || '')) return row.song_id;
     var m = String(row.appl_music_link || '').match(/\/(\d{6,})(?:[?#]|$)/);
@@ -106,8 +111,23 @@
   var sheetReq = fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV);
 
   Promise.all([appleReq, sheetReq]).then(function (res) {
+    var first = res;
+    /* Apple's artist lookup sometimes leaves out the newest releases for a few days: look those up by their own id. */
+    var ids0 = {};
+    (res[0].results || []).forEach(function (x) { if (x.wrapperType === 'collection') ids0[String(x.collectionId)] = true; });
+    var miss = [];
+    res[1].forEach(function (r) {
+      if (String(r.release_type || '').toLowerCase() !== TYPE.toLowerCase()) return;
+      var id = appleIdFrom(r); if (id && !ids0[id] && miss.indexOf(id) < 0) miss.push(id);
+    });
+    if (!miss.length) return first;
+    return fetch('https://itunes.apple.com/lookup?id=' + miss.slice(0, 150).join(',') + '&country=' + STOREFRONT)
+      .then(function (r) { return r.json(); }).catch(function () { return {}; })
+      .then(function (extra) { first[0] = { results: (first[0].results || []).concat(extra.results || []) }; return first; });
+  }).then(function (res) {
     var byId = {}, byName = {};
     (res[0].results || []).forEach(function (x) {
+      if (x.wrapperType === 'track' && x.trackId) { byId[String(x.trackId)] = x; return; }   // song_id was a track id
       if (x.wrapperType !== 'collection') return;
       byId[String(x.collectionId)] = x; byName[norm(x.collectionName)] = x;
     });
@@ -145,12 +165,17 @@
       a.setAttribute('aria-label', name + ', opens in a new tab');
       var cover = el('div', 'rs-cover');
       var art = apple && apple.artworkUrl100 ? apple.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
-      if (art && ART_OK.test(art)) {
+      var drive = driveArt(r.song_arts);
+      if (!(art && ART_OK.test(art))) { art = drive; drive = ''; }      // no Apple artwork yet: use the sheet's cover
+      if (art) {
         var img = el('img'); img.src = art; img.alt = ''; img.loading = 'lazy';
-        img.onerror = function () { cover.textContent = ''; cover.appendChild(el('span', null, name)); };
+        img.onerror = (function (img, cover, name, backup) { return function () {
+          if (backup && img.src !== backup) { img.src = backup; return; }
+          cover.textContent = ''; cover.appendChild(el('span', 'rs-alt', name));
+        }; })(img, cover, name, drive);
         cover.appendChild(img);
       } else {
-        cover.appendChild(el('span', null, name));             // no artwork: show the title on a dark tile
+        cover.appendChild(el('span', 'rs-alt', name));         // no artwork: show the title on a dark tile
       }
       var age = (Date.now() - it.date.getTime()) / 86400000;
       if (NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) cover.appendChild(el('span', 'rs-new', 'NEW'));
