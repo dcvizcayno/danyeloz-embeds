@@ -13,7 +13,8 @@
      A swipeable row of releases from the Song Database, newest first.
      Embed in Google Sites with Insert > Embed > By URL:
        https://dcvizcayno.github.io/danyeloz-embeds/release-shelf.html?type=Single
-     ?type= can be Single, EP or Album (matches the release_type column). ?count= sets how many to show.
+     ?type= can be Single, EP or Album (matches the release_type column), or Holiday (holiday music of any type).
+     ?count= sets how many to show.
      Releases with a Bandcamp code in the sheet (bandcamp_embed) show a play badge and play full songs
      right in the shelf; the others open their streaming link in a new tab. -->
 <style>
@@ -77,7 +78,8 @@
 <script>
 (function () {
   /* ================= Settings ================= */
-  var TYPE      = 'Single';   // Single, EP or Album (the release_type column). The URL ?type= overrides this.
+  var TYPE      = 'Single';   // Single, EP, Album (the release_type column) or Holiday. The URL ?type= overrides this.
+  var HOLIDAY_WORDS = /christmas|holiday|xmas|navidad/i;   // Holiday shelf: a title with one of these, or genre "Holiday"
   var COUNT     = 12;         // how many releases to show. The URL ?count= overrides this.
   var TITLE     = 'auto';     // 'auto' = "Newest singles" / "Newest EPs" / "Newest albums", any text, or '' to hide
   var NEW_DAYS  = 14;         // NEW badge for this many days after release (0 = never)
@@ -100,10 +102,18 @@
   var ART_OK = /^https:\/\/is\d*-ssl\.mzstatic\.com\//i;
 
   var q = new URLSearchParams(location.search);
-  var types = { single: 'Single', ep: 'EP', album: 'Album' };
+  var types = { single: 'Single', ep: 'EP', album: 'Album', holiday: 'Holiday' };
   TYPE  = types[String(q.get('type') || TYPE).toLowerCase()] || 'Single';
   COUNT = Math.max(1, Math.min(50, parseInt(q.get('count'), 10) || COUNT));
-  var plural = { Single: 'singles', EP: 'EPs', Album: 'albums' }[TYPE];
+  var plural = { Single: 'singles', EP: 'EPs', Album: 'albums', Holiday: 'holiday music' }[TYPE];
+  var KINDS = { single: 'Single', ep: 'EP', album: 'Album' };
+  /* Does this sheet row belong on this shelf? Holiday takes any release type. */
+  function fits(r) {
+    if (TYPE === 'Holiday') return !!KINDS[String(r.release_type || '').toLowerCase()] &&
+      (/^holiday$/i.test(r.song_genre || '') || HOLIDAY_WORDS.test(r.song_title || ''));
+    return String(r.release_type || '').toLowerCase() === TYPE.toLowerCase();
+  }
+  function kindOf(r) { return KINDS[String(r.release_type || '').toLowerCase()] || TYPE; }
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -134,7 +144,7 @@
     return m ? m[1] : '';
   }
 
-  var title = TITLE === 'auto' ? 'Newest ' + plural : TITLE;
+  var title = TITLE === 'auto' ? (TYPE === 'Holiday' ? 'Holiday music' : 'Newest ' + plural) : TITLE;
   $('rs-title').textContent = title;
   if (!title) $('rs-title').style.display = 'none';
 
@@ -149,7 +159,7 @@
     (res[0].results || []).forEach(function (x) { if (x.wrapperType === 'collection') ids0[String(x.collectionId)] = true; });
     var miss = [];
     res[1].forEach(function (r) {
-      if (String(r.release_type || '').toLowerCase() !== TYPE.toLowerCase()) return;
+      if (!fits(r)) return;
       var id = appleIdFrom(r); if (id && !ids0[id] && miss.indexOf(id) < 0) miss.push(id);
     });
     if (!miss.length) return first;
@@ -167,7 +177,7 @@
     var today = new Date(); today.setHours(23, 59, 59, 999);
     var seen = {}, list = [];
     res[1].forEach(function (r) {
-      if (String(r.release_type || '').toLowerCase() !== TYPE.toLowerCase()) return;
+      if (!fits(r)) return;
       var d = r.release_date ? new Date(r.release_date + 'T00:00:00') : null;
       if (!d || isNaN(d) || d > today) return;                 // released only; upcoming songs live elsewhere
       var id = appleIdFrom(r), key = id || norm(r.song_title); // album tracks share one collection id
@@ -183,7 +193,7 @@
     var row = $('rs-row'); row.textContent = '';
     list.forEach(function (it) {
       var r = it.row, apple = byId[it.id] || byName[norm(r.song_title)];
-      var name = TYPE === 'Album' && apple ? apple.collectionName : r.song_title;
+      var name = kindOf(r) === 'Album' && apple ? apple.collectionName : r.song_title;
 
       var url = '';
       for (var k = 0; k < LINK_TO.length && !url; k++) {
@@ -226,7 +236,7 @@
       }
       a.appendChild(cover);
       a.appendChild(el('span', 'rs-name', name));
-      a.appendChild(el('span', 'rs-meta', it.date.getFullYear() + ' · ' + TYPE));
+      a.appendChild(el('span', 'rs-meta', it.date.getFullYear() + ' · ' + kindOf(r)));
       row.appendChild(a);
     });
     fit();
