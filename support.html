@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Support Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Support Me (About page)
+     "Fuel the journey" card with every support link. These go to other websites, so Google Sites
+     opens them in a new tab. Edit the list in Settings.
+     Embed in Google Sites with Insert > Embed:
+       https://dcvizcayno.github.io/danyeloz-embeds/support.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #sp { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505; border-radius: 16px; padding: 18px;
+    height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  #sp * { box-sizing: border-box; }
+  .sp-h { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 20px; }
+  .sp-p { margin: 0; font-size: 14px; line-height: 1.5; color: #c4c4cc; }
+  .sp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .sp-btn { min-height: 64px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; border-radius: 12px; text-decoration: none;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); color: #f4f4f6; }
+  .sp-btn:hover { background: rgba(255,255,255,.1); }
+  .sp-btn:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
+  .sp-btn.main { background: #D3413F; border-color: #D3413F; }
+  .sp-btn.main:hover { background: #e0504d; }
+  .sp-ico { width: 34px; height: 34px; border-radius: 9px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; flex: none; }
+  .sp-ico svg { width: 18px; height: 18px; }
+  .sp-t { margin: 0; font-weight: 600; font-size: 14px; }
+  .sp-s { margin: 2px 0 0; font-size: 12px; color: #c4c4cc; }
+  .main .sp-s { color: #fde2e1; }
+  .sp-note { margin: auto 0 0; font-size: 12px; color: #a1a1aa; }
+  @media (max-width: 440px) { .sp-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div id="sp">
+  <p class="sp-h" id="sp-h"></p>
+  <p class="sp-p" id="sp-p"></p>
+  <div class="sp-grid" id="sp-grid"></div>
+  <p class="sp-note" id="sp-note"></p>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var HEADING = 'Fuel the journey';
+  var TEXT    = 'If my music speaks to you, buy me a coffee or join me on Patreon. Together, we keep the songs alive.';
+  var LINKS   = [   // name, short note, link, icon, style ('main' = red)
+    ['Join me on Patreon', 'Monthly support, extras', 'https://patreon.com/danyeloz', 'heart', 'main'],
+    ['Buy me a coffee', 'A one-time thank you', 'https://buymeacoffee.com/danielvizkk', 'cup', ''],
+    ['Ko-fi', 'Buy me a coffee on Ko-fi', 'https://ko-fi.com/danyeloz', 'cup', ''],
+    ['PayPal', 'Send any amount', 'https://paypal.me/danyeloz1554', 'card', '']
+  ];
+  var NOTE    = 'Every bit goes back into the music. Thank you.';
+  /* ============================================ */
+
+  var S = 'fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+  var ICONS = {
+    heart: '<svg viewBox="0 0 24 24" ' + S + '><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+    cup:   '<svg viewBox="0 0 24 24" ' + S + '><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/></svg>',
+    card:  '<svg viewBox="0 0 24 24" ' + S + '><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg>'
+  };
+  function $(id) { return document.getElementById(id); }
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  $('sp-h').textContent = HEADING; $('sp-p').textContent = TEXT; $('sp-note').textContent = NOTE;
+  LINKS.forEach(function (l) {
+    if (!/^https:\/\//.test(l[2])) return;
+    var a = el('a', 'sp-btn' + (l[4] ? ' ' + l[4] : '')); a.href = l[2]; a.target = '_blank'; a.rel = 'noopener';
+    a.setAttribute('aria-label', l[0] + ', opens in a new tab');
+    var ic = el('span', 'sp-ico'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = ICONS[l[3]] || '';
+    var t = el('span'); t.appendChild(el('p', 'sp-t', l[0])); t.appendChild(el('p', 'sp-s', l[1]));
+    a.appendChild(ic); a.appendChild(t); $('sp-grid').appendChild(a);
+  });
+})();
+</script>
+
+</body>
+</html>

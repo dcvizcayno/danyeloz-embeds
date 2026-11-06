@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Know Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Open+Sans:wght@400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Know Me (About page)
+     Profile card (photo, genres, stats) and your story. The Releases number counts the
+     Song Database automatically. Edit the text in Settings.
+     Embed in Google Sites with Insert > Embed:
+       https://dcvizcayno.github.io/danyeloz-embeds/know-me.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #km { font-family: 'Plus Jakarta Sans', Arial, sans-serif; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+  #km * { box-sizing: border-box; }
+  .km-card { background: #050505; color: #f4f4f6; border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 18px; flex: none; }
+  .km-photo { width: 96px; height: 96px; border-radius: 50%; background: #2a1416 center 20% / cover no-repeat; border: 2px solid rgba(255,255,255,.14); flex: none; }
+  .km-id { flex: 1; min-width: 0; }
+  .km-name { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 26px; }
+  .km-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .km-tags span { font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); color: #e4e4e7; }
+  .km-stats { display: flex; gap: 18px; padding-left: 18px; border-left: 1px solid rgba(255,255,255,.1); text-align: center; flex: none; }
+  .km-n { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 20px; color: #f4f4f6; }
+  .km-l { margin: 2px 0 0; font-size: 12px; color: #a1a1aa; }
+  .km-story { flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: #c4c4cc transparent; }
+  .km-story p { margin: 0 0 12px; font-family: 'Open Sans', Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #1F1F1F; }
+  @media (max-width: 560px) {
+    .km-card { flex-wrap: wrap; } .km-stats { width: 100%; border-left: 0; padding-left: 0; padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,.1); justify-content: space-around; }
+  }
+</style>
+
+<div id="km">
+  <div class="km-card">
+    <div class="km-photo" id="km-photo" role="img"></div>
+    <div class="km-id"><p class="km-name" id="km-name"></p><div class="km-tags" id="km-tags"></div></div>
+    <div class="km-stats" id="km-stats"></div>
+  </div>
+  <div class="km-story" id="km-story" tabindex="0"></div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var NAME   = 'Danyel OZ';
+  var PHOTO  = 'images/about.jpg';       // images/about.jpg in this repo, any https image link, or a Drive share link
+  var TAGS   = ['Acoustic pop', 'Alternative rock', 'Hip hop and rap'];
+  var STATS  = [['auto', 'Releases'], ['2 wks', 'New music'], ['PH', 'Roots']];   // 'auto' = counted from the Song Database
+  var STORY  = [
+    'I’m Danyel OZ, an indie music artist with a passion for crafting songs that blend stories, emotions, and melodies across genres. My music is rooted in real experiences, both my own and those of people around me, woven into lyrics that aim to connect deeply with listeners.',
+    'By day, I’m a seasoned Information Security professional with over 20 years of experience in cybersecurity, governance, and risk management. I’ve built frameworks, led teams, and created solutions that protect businesses and empower people. That world demands precision, structure, and discipline.',
+    'Music, for me, is the counterbalance; the place where imperfection is allowed, where feelings take the lead, and where honesty matters more than polish. I don’t chase perfection; I chase truth. My songs carry raw emotions, inspirations, dreams, and everyday stories. If even one person feels seen, heard, or comforted through my music, then I’ve done my part.',
+    'Born and raised in the Philippines, my sound is a fusion of acoustic pop, alternative rock, and hip hop/rap. Each track reflects a piece of who I am; shaped by both the structured world of cybersecurity and the boundless space of music, always created with the hope of reaching hearts that need it most.'
+  ];
+  /* ============================================ */
+
+  var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw/gviz/tq?tqx=out:csv&gid=0';
+  function $(id) { return document.getElementById(id); }
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function imageUrl(u) {
+    var m = String(u || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400' : u;
+  }
+
+  $('km-name').textContent = NAME;
+  var ph = imageUrl(PHOTO);
+  if (/^(https:\/\/|images\/)/.test(ph)) $('km-photo').style.backgroundImage = 'url("' + ph.replace(/"/g, '%22') + '")';
+  $('km-photo').setAttribute('aria-label', 'Photo of ' + NAME);
+  TAGS.forEach(function (t) { $('km-tags').appendChild(el('span', null, t)); });
+  var autoCell = null;
+  STATS.forEach(function (s) {
+    var d = el('div'), n = el('p', 'km-n', s[0] === 'auto' ? '…' : s[0]);
+    if (s[0] === 'auto') autoCell = n;
+    d.appendChild(n); d.appendChild(el('p', 'km-l', s[1])); $('km-stats').appendChild(d);
+  });
+  STORY.forEach(function (p) { $('km-story').appendChild(el('p', null, p)); });
+
+  if (autoCell) fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(function (t) {
+    var today = new Date().toISOString().slice(0, 10);
+    var dates = t.match(/"\d{4}-\d{2}-\d{2}"/g) || [];          // one release date per row
+    var n = dates.filter(function (d) { return d.slice(1, 11) <= today; }).length;
+    autoCell.textContent = n >= 100 ? Math.floor(n / 50) * 50 + '+' : String(n);
+  }).catch(function () { autoCell.textContent = '200+'; });
+})();
+</script>
+
+</body>
+</html>
