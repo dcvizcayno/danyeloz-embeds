@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Explore Releases</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Explore Releases (Released page)
+     A tabbed browser for the whole catalog: All, Albums, Singles, EPs, Holiday.
+     "All" shows the newest albums as covers and the newest singles as a list.
+     Each tab shows every release of that kind, newest first, in a scrolling grid.
+     Embed in Google Sites with Insert > Embed > By URL (Whole page):
+       https://dcvizcayno.github.io/danyeloz-embeds/explore-releases.html
+     ?tab= opens a tab first: all, album, single, ep or holiday. -->
+<style>
+  html, body { margin: 0; padding: 0; background: #050505; height: 100%; }
+  #ex { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505;
+    border-radius: 16px; padding: 14px 16px; box-sizing: border-box; height: 100%;
+    display: flex; flex-direction: column; gap: 12px; }
+  #ex * { box-sizing: border-box; }
+  .ex-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .ex-tabs::-webkit-scrollbar { display: none; }
+  .ex-tab { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+    background: #111115; color: #e4e4e7; font: 500 13px 'Plus Jakarta Sans', Arial, sans-serif;
+    cursor: pointer; white-space: nowrap; flex: none; }
+  .ex-tab[aria-selected="true"] { background: #D3413F; border-color: #D3413F; color: #fff; font-weight: 600; }
+  .ex-tab:focus-visible, .ex-more:focus-visible, .ex-item:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
+  .ex-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent;
+    display: flex; flex-direction: column; gap: 12px; }
+  .ex-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .ex-head + .ex-grid, .ex-head + .ex-list { margin-top: -4px; }
+  .ex-title { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 17px; }
+  .ex-more { font-size: 13px; font-weight: 600; color: #f26b6b; background: none; border: 0; padding: 0;
+    cursor: pointer; font-family: inherit; border-radius: 4px; }
+  .ex-rule { border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
+  .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--w, 104px), 1fr)); gap: 14px; }
+  .ex-item { text-decoration: none; color: inherit; border-radius: 10px; min-width: 0; }
+  .ex-cover { width: 100%; aspect-ratio: 1; border-radius: 10px; background: #18181b; overflow: hidden; position: relative; }
+  .ex-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ex-cover .ex-alt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px;
+    text-align: center; font-family: 'Outfit', sans-serif; font-size: 13px; color: #d4d4d8; }
+  .ex-new { position: absolute; top: 6px; left: 6px; background: #D3413F; color: #fff; font-size: 10px; font-weight: 600;
+    letter-spacing: .06em; padding: 3px 6px; border-radius: 6px; }
+  .ex-name { margin: 7px 0 0; font-weight: 600; font-size: 13px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ex-meta { margin: 0; font-size: 12px; color: #a1a1aa; }
+  .ex-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px 16px; }
+  .ex-row { display: flex; align-items: center; gap: 12px; }
+  .ex-row .ex-cover { width: 44px; height: 44px; flex: none; border-radius: 7px; }
+  .ex-row .ex-name { margin: 0; font-size: 14px; -webkit-line-clamp: 1; }
+  .ex-row .ex-meta { margin-top: 2px; }
+  .ex-row .ex-alt, .ex-row .ex-new { display: none; }      /* too small for text: the NEW tag moves into the meta line */
+  .ex-tag { color: #f26b6b; font-weight: 600; }
+  .ex-msg { font-size: 14px; color: #c4c4cc; margin: 4px 0 0; line-height: 1.5; }
+  .ex-msg a { color: #f26b6b; font-weight: 600; }
+</style>
+
+<div id="ex">
+  <div class="ex-tabs" role="tablist" aria-label="Filter releases" id="ex-tabs"></div>
+  <div class="ex-body" role="tabpanel" id="ex-body" tabindex="0"><p class="ex-msg">Loading…</p></div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var START_TAB    = 'all';     // all, album, single, ep or holiday. The URL ?tab= overrides this.
+  var ALL_COVERS   = 6;         // album covers shown on the "All" tab
+  var ALL_SINGLES  = 3;         // singles listed on the "All" tab (one row on a wide screen)
+  var NEW_DAYS     = 14;        // NEW badge for this many days after release (0 = never)
+  var HOLIDAY_WORDS = /christmas|holiday|xmas|navidad/i;   // a title with one of these, or genre "Holiday", is holiday music
+  var LINK_TO      = ['appl_music_link', 'spotify_link', 'yt_video_link', 'amazon_link'];  // first valid one wins
+  /* ============================================ */
+
+  var ARTIST_ID  = '1706653995';
+  var STOREFRONT = 'us';
+  var SHEET_ID   = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
+  var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
+  var ARTIST_URL = 'https://music.apple.com/us/artist/danyel-oz/1706653995';
+  var OK = {
+    appl_music_link: /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i,
+    spotify_link:    /^https:\/\/(open\.spotify\.com|spotify\.link)\//i,
+    yt_video_link:   /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i,
+    amazon_link:     /^https:\/\/(music\.)?amazon\.[a-z.]+\/|^https:\/\/amzn\.to\//i
+  };
+  var ART_OK = /^https:\/\/is\d*-ssl\.mzstatic\.com\//i;
+
+  var TABS = [
+    { key: 'all',     label: 'All' },
+    { key: 'album',   label: 'Albums',  type: 'Album',  word: 'Album' },
+    { key: 'single',  label: 'Singles', type: 'Single', word: 'Single' },
+    { key: 'ep',      label: 'EPs',     type: 'EP',     word: 'EP' },
+    { key: 'holiday', label: 'Holiday', holiday: true,  word: 'Holiday' }
+  ];
+  var q = new URLSearchParams(location.search);
+  var current = String(q.get('tab') || START_TAB).toLowerCase();
+  if (!TABS.some(function (t) { return t.key === current; })) current = 'all';
+
+  var data = null, apple = { byId: {}, byName: {} };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function norm(s) { return String(s || '').toLowerCase().replace(/ - (single|ep)$/, '').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return rows.filter(function (r) { return r.join('').trim(); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
+    });
+  }
+  function appleIdFrom(row) {
+    if (/^\d{6,}$/.test(row.song_id || '')) return row.song_id;
+    var m = String(row.appl_music_link || '').match(/\/(\d{6,})(?:[?#]|$)/);
+    return m ? m[1] : '';
+  }
+  function isHoliday(r) { return /^holiday$/i.test(r.song_genre || '') || HOLIDAY_WORDS.test(r.song_title || ''); }
+
+  /* Builds one release list per tab from the sheet: released only, newest first, no duplicates. */
+  function build(rows) {
+    var today = new Date(); today.setHours(23, 59, 59, 999);
+    var out = { album: [], single: [], ep: [], holiday: [] }, seen = {};
+    rows.forEach(function (r) {
+      var type = { single: 'Single', ep: 'EP', album: 'Album' }[String(r.release_type || '').toLowerCase()];
+      if (!type) return;
+      var d = r.release_date ? new Date(r.release_date + 'T00:00:00') : null;
+      if (!d || isNaN(d) || d > today) return;                       // upcoming songs live elsewhere
+      var id = appleIdFrom(r), key = type + '|' + (id || norm(r.song_title));
+      if (seen[key]) return; seen[key] = true;
+      var it = { row: r, id: id, date: d, type: type };
+      out[type.toLowerCase()].push(it);
+      if (isHoliday(r)) out.holiday.push(it);
+    });
+    Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return b.date - a.date; }); });
+    return out;
+  }
+
+  function details(it) {
+    var r = it.row, a = apple.byId[it.id] || apple.byName[norm(r.song_title)];
+    var name = it.type === 'Album' && a ? a.collectionName : r.song_title;
+    var url = '';
+    for (var k = 0; k < LINK_TO.length && !url; k++) {
+      var v = String(r[LINK_TO[k]] || '').trim();
+      if (v && OK[LINK_TO[k]] && OK[LINK_TO[k]].test(v)) url = v;
+    }
+    if (!url && a && OK.appl_music_link.test(a.collectionViewUrl || '')) url = a.collectionViewUrl;
+    var art = a && a.artworkUrl100 ? a.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
+    return { name: name, url: url || ARTIST_URL, art: ART_OK.test(art) ? art : '' };
+  }
+
+  function cover(info, it) {
+    var c = el('div', 'ex-cover');
+    if (info.art) {
+      var img = el('img'); img.src = info.art; img.alt = ''; img.loading = 'lazy';
+      img.onerror = function () { c.removeChild(img); c.insertBefore(el('span', 'ex-alt', info.name), c.firstChild); };
+      c.appendChild(img);
+    } else {
+      c.appendChild(el('span', 'ex-alt', info.name));                  // no artwork: the title on a dark tile
+    }
+    var age = (Date.now() - it.date.getTime()) / 86400000;
+    if (NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) c.appendChild(el('span', 'ex-new', 'NEW'));
+    return c;
+  }
+
+  function link(info, cls) {
+    var a = el('a', 'ex-item' + (cls ? ' ' + cls : '')); a.href = info.url; a.target = '_blank'; a.rel = 'noopener';
+    a.setAttribute('aria-label', info.name + ', opens in a new tab');
+    return a;
+  }
+
+  function tile(it) {
+    var info = details(it), a = link(info);
+    a.appendChild(cover(info, it));
+    a.appendChild(el('p', 'ex-name', info.name));
+    a.appendChild(el('p', 'ex-meta', it.date.getFullYear() + ' · ' + it.type));
+    return a;
+  }
+
+  function listRow(it) {
+    var info = details(it), a = link(info, 'ex-row');
+    a.appendChild(cover(info, it));
+    var t = el('div'); t.style.minWidth = '0';
+    t.appendChild(el('p', 'ex-name', info.name));
+    var meta = el('p', 'ex-meta', it.date.getFullYear() + ' · ' + it.type);
+    var age = (Date.now() - it.date.getTime()) / 86400000;
+    if (NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('span', 'ex-tag', 'New')); }
+    t.appendChild(meta);
+    a.appendChild(t);
+    return a;
+  }
+
+  function head(title, count, goto, rule) {
+    var h = el('div', 'ex-head' + (rule ? ' ex-rule' : ''));
+    h.appendChild(el('p', 'ex-title', title));
+    if (goto && count) {
+      var b = el('button', 'ex-more', 'See all ' + count); b.type = 'button';
+      b.addEventListener('click', function () { select(goto, true); });
+      h.appendChild(b);
+    }
+    return h;
+  }
+
+  function renderTabs() {
+    var bar = $('ex-tabs'); bar.textContent = '';
+    TABS.forEach(function (t) {
+      var b = el('button', 'ex-tab'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + t.key;
+      b.setAttribute('aria-controls', 'ex-body');
+      b.textContent = t.label + (data && t.key !== 'all' ? ' · ' + data[t.key].length : '');
+      b.setAttribute('aria-selected', String(t.key === current));
+      b.tabIndex = t.key === current ? 0 : -1;
+      b.addEventListener('click', function () { select(t.key, false); });
+      bar.appendChild(b);
+    });
+  }
+
+  function renderBody() {
+    var body = $('ex-body'); body.textContent = ''; body.scrollTop = 0;
+    body.setAttribute('aria-labelledby', 'tab-' + current);
+    if (current === 'all') {
+      body.appendChild(head('Albums', data.album.length, 'album'));
+      var g = el('div', 'ex-grid'); g.style.gridTemplateColumns = 'repeat(' + ALL_COVERS + ', minmax(0, 1fr))';
+      data.album.slice(0, ALL_COVERS).forEach(function (it) { g.appendChild(tile(it)); });
+      body.appendChild(g);
+      body.appendChild(head('Singles', data.single.length, 'single', true));
+      var l = el('div', 'ex-list');
+      data.single.slice(0, ALL_SINGLES).forEach(function (it) { l.appendChild(listRow(it)); });
+      body.appendChild(l);
+      return;
+    }
+    var t = TABS.filter(function (x) { return x.key === current; })[0], items = data[current];
+    if (!items.length) { body.appendChild(el('p', 'ex-msg', 'Nothing here yet. New music lands every two weeks.')); return; }
+    body.appendChild(head(t.label, 0));
+    var grid = el('div', 'ex-grid');
+    items.forEach(function (it) { grid.appendChild(tile(it)); });
+    body.appendChild(grid);
+  }
+
+  function select(key, focus) {
+    current = key; renderTabs(); renderBody();
+    if (focus) $('tab-' + key).focus();
+  }
+
+  /* Arrow keys move between tabs, as screen reader users expect. */
+  $('ex-tabs').addEventListener('keydown', function (e) {
+    var i = TABS.map(function (t) { return t.key; }).indexOf(current), n = TABS.length;
+    if (e.key === 'ArrowRight') i = (i + 1) % n; else if (e.key === 'ArrowLeft') i = (i - 1 + n) % n;
+    else if (e.key === 'Home') i = 0; else if (e.key === 'End') i = n - 1; else return;
+    e.preventDefault(); select(TABS[i].key, true);
+  });
+
+  renderTabs();
+
+  var appleReq = fetch('https://itunes.apple.com/lookup?id=' + ARTIST_ID + '&entity=album&sort=recent&limit=200&country=' + STOREFRONT)
+    .then(function (r) { return r.json(); }).catch(function () { return {}; });
+  var sheetReq = fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV);
+
+  Promise.all([appleReq, sheetReq]).then(function (res) {
+    (res[0].results || []).forEach(function (x) {
+      if (x.wrapperType !== 'collection') return;
+      apple.byId[String(x.collectionId)] = x; apple.byName[norm(x.collectionName)] = x;
+    });
+    data = build(res[1]);
+    if (!data.album.length && !data.single.length && !data.ep.length) throw new Error('empty');
+    renderTabs(); renderBody(); fit();
+  }).catch(function () {
+    var body = $('ex-body'); body.textContent = '';
+    var p = el('p', 'ex-msg', 'The catalog is taking a moment to load. ');
+    var a = el('a', null, 'Listen on Apple Music'); a.href = ARTIST_URL; a.target = '_blank'; a.rel = 'noopener';
+    p.appendChild(a); body.appendChild(p);
+  });
+
+  /* Narrows the covers when Google Sites shrinks the embed box on phones. */
+  function fit() {
+    var w = window.innerWidth < 560 ? 92 : 104;
+    $('ex').style.setProperty('--w', w + 'px');
+    ALL_COVERS = window.innerWidth < 560 ? 3 : 6;
+  }
+  window.addEventListener('resize', function () { var before = ALL_COVERS; fit(); if (data && before !== ALL_COVERS && current === 'all') renderBody(); });
+  fit();
+})();
+</script>
+
+</body>
+</html>
