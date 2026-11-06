@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Acoustic Takes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Acoustic Takes (Live page)
+     Every song in the Song Database whose song_genre includes "Acoustic", newest first.
+     Clicking a take plays it right here: the YouTube video (yt_video_link) if there is one,
+     otherwise the Bandcamp player (bandcamp_embed). No new tabs.
+     A title with "cover" in it is labeled Cover, the rest Acoustic.
+     Embed in Google Sites with Insert > Embed:
+       https://dcvizcayno.github.io/danyeloz-embeds/acoustic-takes.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #ac { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505; border-radius: 16px;
+    padding: 14px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  #ac * { box-sizing: border-box; }
+  .ac-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex: none; }
+  .ac-intro { margin: 0; font-size: 14px; color: #c4c4cc; }
+  .ac-count { margin: 0; font-size: 12px; color: #a1a1aa; white-space: nowrap; }
+  .ac-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+  .ac-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
+  .ac-item { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; min-width: 0; border-radius: 10px; }
+  .ac-item:focus-visible, .ac-back:focus-visible { outline: 2px solid #f26b6b; outline-offset: 3px; }
+  .ac-thumb { aspect-ratio: 16 / 9; border-radius: 10px; background: #1c2421 center / cover no-repeat; display: flex; align-items: center;
+    justify-content: center; position: relative; overflow: hidden; }
+  .ac-thumb .ac-alt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px;
+    text-align: center; font-family: 'Outfit', sans-serif; font-size: 13px; color: #d4d4d8; }
+  .ac-play { position: relative; z-index: 1; width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,.65);
+    display: flex; align-items: center; justify-content: center; }
+  .ac-play svg { width: 14px; height: 14px; fill: #fff; margin-left: 2px; }
+  .ac-name { display: block; margin: 7px 0 0; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ac-meta { display: block; margin: 0; font-size: 12px; color: #a1a1aa; }
+  .ac-empty { border: 1px dashed rgba(255,255,255,.2); border-radius: 14px; padding: 18px; display: flex; align-items: center; gap: 16px; }
+  .ac-empty-ico { width: 52px; height: 52px; border-radius: 50%; background: #2a1416; display: flex; align-items: center; justify-content: center; flex: none; }
+  .ac-empty-ico svg { width: 24px; height: 24px; }
+  .ac-empty-h { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 17px; }
+  .ac-empty-p { margin: 3px 0 0; font-size: 13px; color: #a1a1aa; line-height: 1.5; }
+  .ac-now { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+  .ac-back { align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+    background: #111115; color: #e4e4e7; font: 500 13px 'Plus Jakarta Sans', Arial, sans-serif; cursor: pointer; flex: none; }
+  .ac-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; flex: none; max-height: 70%; }
+  .ac-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .ac-frame.bc { aspect-ratio: auto; height: 120px; }
+  .ac-title { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; }
+  .ac-desc { margin: 0; font-size: 13px; line-height: 1.6; color: #d4d4d8; overflow-y: auto; }
+  @media (max-width: 480px) { .ac-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+<div id="ac">
+  <div class="ac-head"><p class="ac-intro" id="ac-intro"></p><p class="ac-count" id="ac-count"></p></div>
+  <div class="ac-body" id="ac-body"><p class="ac-intro">Loading…</p></div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var GENRE    = /acoustic/i;   // song_genre values that count as an acoustic take
+  var INTRO    = 'Acoustic vibes and covers, one mic, one take.';
+  var EMPTY_H  = 'First acoustic takes are on the way';
+  var EMPTY_P  = 'Stripped-down versions and covers, recorded live. They’ll show up here.';
+  var BC_BG    = '050505', BC_LINK = 'f26b6b';
+  /* ============================================ */
+
+  var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw/gviz/tq?tqx=out:csv&gid=0';
+  function $(id) { return document.getElementById(id); }
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return rows.filter(function (r) { return r.join('').trim(); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
+    });
+  }
+  /* Only ids are kept from pasted links; player addresses are rebuilt here. */
+  function ytId(link) { return (String(link || '').match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/) || [])[1] || ''; }
+  function bandcamp(code) {
+    var m = String(code || '').match(/src\s*=\s*["']https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]*?\b(album|track)=(\d+)/i);
+    return m ? 'https://bandcamp.com/EmbeddedPlayer/' + m[1].toLowerCase() + '=' + m[2] + '/size=large/bgcol=' + BC_BG +
+      '/linkcol=' + BC_LINK + '/artwork=small/tracklist=false/transparent=true/' : '';
+  }
+  function driveArt(link) {
+    var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w640' : '';
+  }
+
+  var items = [];
+  $('ac-intro').textContent = INTRO;
+
+  function grid() {
+    var body = $('ac-body'); body.textContent = '';
+    $('ac-count').textContent = items.length ? items.length + (items.length === 1 ? ' take' : ' takes') : '';
+    if (!items.length) {
+      var e = el('div', 'ac-empty');
+      e.innerHTML = '<span class="ac-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#f26b6b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></span>';
+      var t = el('div'); t.appendChild(el('p', 'ac-empty-h', EMPTY_H)); t.appendChild(el('p', 'ac-empty-p', EMPTY_P));
+      e.appendChild(t); body.appendChild(e); return;
+    }
+    var g = el('div', 'ac-grid');
+    items.forEach(function (it) {
+      var b = el('button', 'ac-item'); b.type = 'button'; b.setAttribute('aria-label', 'Play ' + it.title);
+      var th = el('span', 'ac-thumb'); th.style.display = 'flex';
+      var img = it.yt ? 'https://i.ytimg.com/vi/' + it.yt + '/hqdefault.jpg' : it.art;
+      if (img) th.style.backgroundImage = 'url("' + img + '")'; else th.appendChild(el('span', 'ac-alt', it.title));
+      var p = el('span', 'ac-play'); p.setAttribute('aria-hidden', 'true'); p.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>';
+      if (it.yt || it.bc) th.appendChild(p);
+      b.appendChild(th); b.appendChild(el('span', 'ac-name', it.title)); b.appendChild(el('span', 'ac-meta', it.kind));
+      b.addEventListener('click', function () { play(it, b); });
+      g.appendChild(b);
+    });
+    body.appendChild(g);
+  }
+
+  var lastBtn = null;
+  function play(it, btn) {
+    lastBtn = btn;
+    var body = $('ac-body'); body.textContent = ''; $('ac-count').textContent = '';
+    var now = el('div', 'ac-now');
+    var back = el('button', 'ac-back', '← Back to acoustic takes'); back.type = 'button';
+    back.addEventListener('click', stop); now.appendChild(back);
+    var src = it.yt ? 'https://www.youtube-nocookie.com/embed/' + it.yt + '?autoplay=1&rel=0' : it.bc;
+    if (src) {
+      var box = el('div', 'ac-frame' + (it.yt ? '' : ' bc')), f = el('iframe');
+      f.src = src; f.title = it.title; f.allow = 'autoplay; encrypted-media; picture-in-picture'; f.allowFullscreen = true;
+      box.appendChild(f); now.appendChild(box);
+    }
+    now.appendChild(el('p', 'ac-title', it.title));
+    if (it.desc) now.appendChild(el('p', 'ac-desc', it.desc));
+    body.appendChild(now); back.focus();
+  }
+  function stop() { grid(); if (lastBtn) { var b = [].filter.call(document.querySelectorAll('.ac-item'), function (x) { return x.getAttribute('aria-label') === lastBtn.getAttribute('aria-label'); })[0]; if (b) b.focus(); } }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.querySelector('.ac-now')) stop(); });
+
+  fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).then(function (rows) {
+    var today = new Date(); today.setHours(23, 59, 59, 999);
+    items = rows.filter(function (r) {
+      if (!GENRE.test(r.song_genre || '')) return false;
+      var d = r.release_date ? new Date(r.release_date + 'T00:00:00') : null;
+      return !d || isNaN(d) || d <= today;                           // released, or no date yet
+    }).map(function (r) {
+      return { title: r.song_title, yt: ytId(r.yt_video_link), bc: bandcamp(r.bandcamp_embed), art: driveArt(r.song_arts),
+        kind: /\bcover\b/i.test(r.song_title || '') ? 'Cover' : 'Acoustic', desc: (r.song_description || '').trim(),
+        date: r.release_date || '' };
+    }).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    grid();
+  }).catch(function () { items = []; grid(); });
+})();
+</script>
+
+</body>
+</html>

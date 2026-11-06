@@ -20,6 +20,7 @@ Each page has a **Settings** block at the top of its script.
 | `in-progress.html` | Behind the Scenes: In Progress (coming next, upcoming singles/album, 1000 Songs, release calendar) |
 | `letter.html` | Connect: Write Me a Letter card (button opens the Cognito form) |
 | `follow-along.html` | Connect: Follow Along social links |
+| `acoustic-takes.html` | Live: Acoustic Takes (song_genre contains Acoustic; plays YouTube or Bandcamp in place) |
 | `release-shelf.html` | Released page: swipeable shelf, `?type=Single`, `EP` or `Album` (Sheet1) |
 
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
