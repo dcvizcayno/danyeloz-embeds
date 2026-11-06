@@ -15,6 +15,7 @@ Each page has a **Settings** block at the top of its script.
 | `featured-videos.html` | Featured Videos |
 | `explore-music.html` | Explore the Music |
 | `music-highlights.html` | Music Highlights (music_highlights tab) |
+| `release-shelf.html` | Released page: swipeable shelf, `?type=Single`, `EP` or `Album` (Sheet1) |
 
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
 The data entry app lives in the private repo `DanyelOZ-Official-Website`.
