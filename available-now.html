@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Available Now</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Available Now (Store page)
+     Every release in the Song Database that has a Bandcamp code (bandcamp_embed), newest first.
+     Clicking a cover opens the Bandcamp player right here; Bandcamp's own Buy button shows the real price.
+     Embed in Google Sites with Insert > Embed:
+       https://dcvizcayno.github.io/danyeloz-embeds/available-now.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #av { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505; border-radius: 16px;
+    padding: 14px 16px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  #av * { box-sizing: border-box; }
+  .av-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex: none; }
+  .av-intro { margin: 0; font-size: 14px; color: #c4c4cc; }
+  .av-count { margin: 0; font-size: 12px; color: #a1a1aa; white-space: nowrap; }
+  .av-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+  .av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+  .av-item { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; min-width: 0; border-radius: 10px; }
+  .av-item:focus-visible, .av-back:focus-visible { outline: 2px solid #f26b6b; outline-offset: 3px; }
+  .av-cover { aspect-ratio: 1; border-radius: 10px; background: #18181b center / cover no-repeat; position: relative; overflow: hidden; display: block; }
+  .av-alt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center;
+    font-family: 'Outfit', sans-serif; font-size: 13px; color: #d4d4d8; }
+  .av-buy { position: absolute; right: 6px; bottom: 6px; height: 24px; padding: 0 8px; border-radius: 999px; background: rgba(5,5,5,.78);
+    font-size: 11px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 4px; }
+  .av-name { display: block; margin: 8px 0 1px; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .av-meta { display: block; margin: 0; font-size: 12px; color: #a1a1aa; }
+  .av-now { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; height: 100%; min-height: 0; }
+  .av-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .av-back { align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+    background: #111115; color: #e4e4e7; font: 500 13px 'Plus Jakarta Sans', Arial, sans-serif; cursor: pointer; flex: none; }
+  .av-now iframe { border: 0; width: 100%; border-radius: 10px; background: #050505; display: block; flex: 1; min-height: 140px; }
+  .av-desc { overflow-y: auto; min-height: 0; }
+  .av-desc h3 { margin: 0 0 6px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; }
+  .av-desc p { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: #d4d4d8; }
+  .av-desc .av-sub { font-size: 12px; color: #a1a1aa; }
+  .av-msg { margin: 0; font-size: 14px; color: #c4c4cc; }
+  @media (max-width: 520px) { .av-now { grid-template-columns: 1fr; overflow-y: auto; } .av-now iframe { flex: none; height: 220px; } }
+</style>
+
+<div id="av">
+  <div class="av-head"><p class="av-intro" id="av-intro"></p><p class="av-count" id="av-count"></p></div>
+  <div class="av-body" id="av-body"><p class="av-msg">Loading…</p></div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var INTRO   = 'Bandcamp downloads that support me directly.';
+  var TYPES   = { album: 'Album', ep: 'EP', single: 'Single' };   // which release types to show
+  var BC_BG   = '050505', BC_LINK = 'f26b6b';
+  /* ============================================ */
+
+  var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw/gviz/tq?tqx=out:csv&gid=0';
+  var ARTIST_ID = '1706653995', ART_OK = /^https:\/\/is\d*-ssl\.mzstatic\.com\//i;
+  function $(id) { return document.getElementById(id); }
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return rows.filter(function (r) { return r.join('').trim(); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
+    });
+  }
+  function bandcamp(code) {
+    var m = String(code || '').match(/src\s*=\s*["']https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]*?\b(album|track)=(\d+)/i);
+    if (!m) return null;
+    var album = m[1].toLowerCase() === 'album';
+    return { album: album, src: 'https://bandcamp.com/EmbeddedPlayer/' + m[1].toLowerCase() + '=' + m[2] + '/size=large/bgcol=' + BC_BG +
+      '/linkcol=' + BC_LINK + '/artwork=small/tracklist=' + album + '/transparent=true/' };
+  }
+  function driveArt(link) {
+    var m = String(link || '').match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/i);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400' : '';
+  }
+  function appleId(r) {
+    if (/^\d{6,}$/.test(r.song_id || '')) return r.song_id;
+    return (String(r.appl_music_link || '').match(/\/(\d{6,})(?:[?#]|$)/) || [])[1] || '';
+  }
+  function fmtDate(iso) { var d = new Date(iso + 'T00:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); }
+
+  var items = [], scrollPos = 0;
+  $('av-intro').textContent = INTRO;
+
+  function cover(it, box) {
+    var src = it.art || it.apple;
+    if (!src) { box.appendChild(el('span', 'av-alt', it.title)); return; }
+    var probe = new Image();
+    probe.onload = function () { box.style.backgroundImage = 'url("' + probe.src + '")'; };
+    probe.onerror = function () {
+      if (it.apple && probe.src !== it.apple) { probe.src = it.apple; return; }
+      box.appendChild(el('span', 'av-alt', it.title));
+    };
+    probe.src = src;
+  }
+
+  function grid() {
+    var body = $('av-body'); body.textContent = '';
+    $('av-count').textContent = items.length ? items.length + ' available' : '';
+    if (!items.length) { body.appendChild(el('p', 'av-msg', 'New downloads are on the way.')); return; }
+    var g = el('div', 'av-grid');
+    items.forEach(function (it, i) {
+      var b = el('button', 'av-item'); b.type = 'button'; b.setAttribute('aria-label', it.title + ', ' + it.type + ', listen and buy');
+      var c = el('span', 'av-cover'); cover(it, c);
+      var tag = el('span', 'av-buy', 'Listen · Buy'); tag.setAttribute('aria-hidden', 'true'); c.appendChild(tag);
+      b.appendChild(c); b.appendChild(el('span', 'av-name', it.title)); b.appendChild(el('span', 'av-meta', it.type));
+      b.addEventListener('click', function () { scrollPos = body.scrollTop; open(it, i); });
+      g.appendChild(b);
+    });
+    body.appendChild(g);
+  }
+
+  function open(it, i) {
+    var body = $('av-body'); body.textContent = ''; $('av-count').textContent = '';
+    var now = el('div', 'av-now'), left = el('div', 'av-col'), right = el('div', 'av-desc');
+    var back = el('button', 'av-back', '← Back to the store'); back.type = 'button';
+    back.addEventListener('click', function () { grid(); $('av-body').scrollTop = scrollPos; var b = document.querySelectorAll('.av-item')[i]; if (b) b.focus(); });
+    left.appendChild(back);
+    var f = el('iframe'); f.src = it.bc.src; f.title = it.title + ' on Bandcamp'; f.setAttribute('seamless', '');
+    if (!it.bc.album) { f.style.flex = 'none'; f.style.height = '120px'; }
+    left.appendChild(f);
+    right.appendChild(el('h3', null, it.title));
+    right.appendChild(el('p', 'av-sub', [it.type, it.genre, fmtDate(it.date)].filter(Boolean).join(' · ')));
+    (it.desc || 'Tap buy in the player to own it on Bandcamp.').split(/\n\s*\n|\r?\n/).forEach(function (p) { if (p.trim()) right.appendChild(el('p', null, p.trim())); });
+    now.appendChild(left); now.appendChild(right); body.appendChild(now); back.focus();
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.querySelector('.av-now')) document.querySelector('.av-back').click(); });
+
+  fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).then(function (rows) {
+    var today = new Date(), seen = {}; today.setHours(23, 59, 59, 999);
+    items = rows.map(function (r) {
+      var type = TYPES[String(r.release_type || '').toLowerCase()], bc = bandcamp(r.bandcamp_embed);
+      var d = r.release_date ? new Date(r.release_date + 'T00:00:00') : null;
+      if (!type || !bc || !d || isNaN(d) || d > today || seen[bc.src]) return null;
+      seen[bc.src] = true;
+      return { title: r.song_title, type: type, bc: bc, art: driveArt(r.song_arts), id: appleId(r), apple: '',
+        genre: r.song_genre, date: r.release_date, desc: (r.song_description || '').trim() };
+    }).filter(Boolean).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var order = { Album: 0, EP: 1, Single: 2 };
+    items.sort(function (a, b) { return order[a.type] - order[b.type] || (a.date < b.date ? 1 : -1); });   // albums, then EPs, then singles
+    var ids = items.filter(function (x) { return x.id; }).map(function (x) { return x.id; });
+    if (!ids.length) return grid();
+    fetch('https://itunes.apple.com/lookup?id=' + ids.slice(0, 150).join(',') + '&country=us').then(function (r) { return r.json(); })
+      .then(function (res) {
+        var by = {};
+        (res.results || []).forEach(function (x) { if (x.artworkUrl100) { by[String(x.collectionId)] = x; if (x.trackId) by[String(x.trackId)] = x; } });
+        items.forEach(function (it) {
+          var a = by[it.id], u = a ? a.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
+          if (ART_OK.test(u)) it.apple = u;
+        });
+      }).catch(function () {}).then(grid);
+  }).catch(function () { items = []; grid(); });
+})();
+</script>
+
+</body>
+</html>

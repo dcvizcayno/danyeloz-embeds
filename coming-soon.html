@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Store, Coming Soon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Danyel OZ: Coming Soon (Store page)
+     Merch card with the waitlist signup (your Cognito form, shown right here), and the Production Vault card.
+     The vault card is display only: the native Sites button under it opens the page in the same tab.
+     Embed in Google Sites with Insert > Embed:
+       https://dcvizcayno.github.io/danyeloz-embeds/coming-soon.html -->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #cs { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; height: 100%; box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  #cs * { box-sizing: border-box; }
+  .cs-card { background: #050505; border-radius: 16px; }
+  .cs-merch { padding: 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+  .cs-h { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 22px; }
+  .cs-p { margin: 0; font-size: 14px; line-height: 1.55; color: #c4c4cc; }
+  .cs-form { flex: 1; min-height: 220px; border-radius: 12px; overflow: hidden; background: #fff; margin-top: 4px; }
+  .cs-form iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .cs-wait { margin-top: 4px; border: 1px dashed rgba(255,255,255,.2); border-radius: 12px; padding: 14px; font-size: 13px; color: #a1a1aa; }
+  .cs-vault { display: flex; overflow: hidden; height: 112px; flex: none; }
+  .cs-bars { width: 170px; flex: none; background: #1a1d2b; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .cs-bars span { width: 5px; border-radius: 3px; }
+  .cs-vtext { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .cs-kicker { margin: 0 0 3px; font-size: 12px; font-weight: 600; color: #c7cdf5; }
+  .cs-vh { margin: 0; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 19px; }
+  .cs-vp { margin: 3px 0 0; font-size: 13px; color: #a1a1aa; }
+  @media (max-width: 460px) { .cs-bars { width: 90px; } }
+</style>
+
+<div id="cs">
+  <div class="cs-card cs-merch">
+    <p class="cs-h" id="cs-h"></p>
+    <p class="cs-p" id="cs-p"></p>
+    <div id="cs-signup"></div>
+  </div>
+  <div class="cs-card cs-vault" aria-label="Production Vault">
+    <div class="cs-bars" id="cs-bars" aria-hidden="true"></div>
+    <div class="cs-vtext"><p class="cs-kicker" id="cs-k"></p><p class="cs-vh" id="cs-vh"></p><p class="cs-vp" id="cs-vp"></p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var HEADING   = 'The merch store opens soon';
+  var TEXT      = 'Be first in line when it does. One message when it opens, nothing else.';
+  var WAITLIST  = '';   // your Cognito waitlist embed address, like https://www.cognitoforms.com/f/XXXX/3
+  var WAIT_MSG  = 'The waitlist opens shortly. Check back soon.';
+  var VAULT_K   = 'For producers';
+  var VAULT_H   = 'Production Vault';
+  var VAULT_P   = 'Royalty-free beats from my sessions. I make the beats, you make the song.';
+  /* ============================================ */
+
+  function $(id) { return document.getElementById(id); }
+  $('cs-h').textContent = HEADING; $('cs-p').textContent = TEXT;
+  $('cs-k').textContent = VAULT_K; $('cs-vh').textContent = VAULT_H; $('cs-vp').textContent = VAULT_P;
+  [[30, '#4a5280'], [54, '#6a74b0'], [40, '#4a5280'], [66, '#8892d0'], [46, '#6a74b0'], [26, '#4a5280'], [56, '#6a74b0']].forEach(function (b) {
+    var s = document.createElement('span'); s.style.height = b[0] + 'px'; s.style.background = b[1]; $('cs-bars').appendChild(s);
+  });
+  var slot = $('cs-signup');
+  if (/^https:\/\/www\.cognitoforms\.com\/f\/[\w-]+\/\d+$/.test(WAITLIST)) {   // only a Cognito form address is used
+    slot.className = 'cs-form'; slot.parentNode.style.minHeight = '360px';
+    var f = document.createElement('iframe'); f.src = WAITLIST; f.title = 'Merch waitlist'; slot.appendChild(f);
+  } else {
+    slot.className = 'cs-wait'; slot.textContent = WAIT_MSG;
+  }
+})();
+</script>
+
+</body>
+</html>
