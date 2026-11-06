@@ -13,7 +13,9 @@
      A swipeable row of releases from the Song Database, newest first.
      Embed in Google Sites with Insert > Embed > By URL:
        https://dcvizcayno.github.io/danyeloz-embeds/release-shelf.html?type=Single
-     ?type= can be Single, EP or Album (matches the release_type column). ?count= sets how many to show. -->
+     ?type= can be Single, EP or Album (matches the release_type column). ?count= sets how many to show.
+     Releases with a Bandcamp code in the sheet (bandcamp_embed) show a play badge and play full songs
+     right in the shelf; the others open their streaming link in a new tab. -->
 <style>
   html, body { margin: 0; padding: 0; background: #050505; height: 100%; }
   #rs { font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #f4f4f6; background: #050505;
@@ -37,11 +39,25 @@
   .rs-meta { margin: 0; font-size: 12px; color: #a1a1aa; }
   .rs-msg { font-size: 14px; color: #c4c4cc; margin: 4px 16px 0 0; line-height: 1.5; }
   .rs-msg a { color: #f26b6b; font-weight: 600; }
+  button.rs-item { background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; }
+  .rs-name, .rs-meta { display: block; }
+  .rs-name { display: -webkit-box; }
+  .rs-play { position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(5,5,5,.72);
+    display: flex; align-items: center; justify-content: center; }
+  .rs-play svg { width: 12px; height: 12px; fill: #fff; margin-left: 2px; }
+  .rs-now { display: none; flex-direction: column; gap: 10px; flex: 1; min-height: 0; padding-right: 16px; }
+  .rs-back { align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+    background: #111115; color: #e4e4e7; font: 500 13px 'Plus Jakarta Sans', Arial, sans-serif; cursor: pointer; }
+  .rs-back:focus-visible { outline: 2px solid #f26b6b; outline-offset: 2px; }
+  .rs-now iframe { border: 0; width: 100%; border-radius: 10px; background: #050505; display: block; }
+  .rs-note { margin: 0; font-size: 12px; color: #a1a1aa; }
+  .rs-note a { color: #f26b6b; font-weight: 600; text-decoration: none; }
 </style>
 
 <div id="rs">
   <div class="rs-head"><p class="rs-title" id="rs-title"></p><p class="rs-hint" id="rs-hint"></p></div>
   <div class="rs-row" id="rs-row"><p class="rs-msg">Loading…</p></div>
+  <div class="rs-now" id="rs-now"></div>
 </div>
 
 <script>
@@ -51,7 +67,9 @@
   var COUNT     = 12;         // how many releases to show. The URL ?count= overrides this.
   var TITLE     = 'auto';     // 'auto' = "Newest singles" / "Newest EPs" / "Newest albums", any text, or '' to hide
   var NEW_DAYS  = 14;         // NEW badge for this many days after release (0 = never)
-  var LINK_TO   = ['appl_music_link', 'spotify_link', 'yt_video_link', 'amazon_link'];  // first valid one wins
+  var LINK_TO   = ['appl_music_link', 'spotify_link', 'yt_video_link', 'amazon_link'];  // no Bandcamp code: first valid one opens in a new tab
+  var BC_BG     = '050505';   // Bandcamp player background (hex, no #)
+  var BC_LINK   = 'f26b6b';   // Bandcamp player accent color (hex, no #)
   /* ============================================ */
 
   var ARTIST_ID  = '1706653995';
@@ -161,8 +179,15 @@
       if (!url && apple && OK.appl_music_link.test(apple.collectionViewUrl || '')) url = apple.collectionViewUrl;
       if (!url) url = ARTIST_URL;
 
-      var a = el('a', 'rs-item'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
-      a.setAttribute('aria-label', name + ', opens in a new tab');
+      var bc = bandcamp(r.bandcamp_embed), a;
+      if (bc) {                                                  // full songs play right here on Bandcamp
+        a = el('button', 'rs-item'); a.type = 'button';
+        a.setAttribute('aria-label', 'Play ' + name + ' on Bandcamp');
+        a.addEventListener('click', (function (name, bc, btn) { return function () { play(name, bc, btn); }; })(name, bc, a));
+      } else {
+        a = el('a', 'rs-item'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        a.setAttribute('aria-label', name + ', opens in a new tab');
+      }
       var cover = el('div', 'rs-cover');
       var art = apple && apple.artworkUrl100 ? apple.artworkUrl100.replace(/\/\d+x\d+bb\./, '/400x400bb.') : '';
       if (!(art && ART_OK.test(art))) art = '';
@@ -180,9 +205,14 @@
       }
       var age = (Date.now() - it.date.getTime()) / 86400000;
       if (NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) cover.appendChild(el('span', 'rs-new', 'NEW'));
+      if (bc) {
+        var pb = el('span', 'rs-play'); pb.setAttribute('aria-hidden', 'true');
+        pb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 4l15 8-15 8z"/></svg>';
+        cover.appendChild(pb);
+      }
       a.appendChild(cover);
-      a.appendChild(el('p', 'rs-name', name));
-      a.appendChild(el('p', 'rs-meta', it.date.getFullYear() + ' · ' + TYPE));
+      a.appendChild(el('span', 'rs-name', name));
+      a.appendChild(el('span', 'rs-meta', it.date.getFullYear() + ' · ' + TYPE));
       row.appendChild(a);
     });
     fit();
@@ -193,6 +223,51 @@
     p.appendChild(a); row.appendChild(p);
     $('rs-hint').textContent = '';
   });
+
+  /* Reads Bandcamp's embed code and keeps only the album or track number (never runs the pasted HTML).
+     The player address is rebuilt in the shelf's dark colors, with a track list for albums and EPs.
+     Bandcamp plays full songs (with its own free-listen limits). */
+  function bandcamp(code) {
+    var m = String(code || '').match(/src\s*=\s*["']https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]*?\b(album|track)=(\d+)/i);
+    if (!m) return null;
+    var isAlbum = m[1].toLowerCase() === 'album';
+    var page = (String(code).match(/href\s*=\s*["'](https:\/\/[\w-]+\.bandcamp\.com\/[\w\/.-]+)["']/i) || [])[1] || '';
+    return {
+      album: isAlbum, page: page,
+      src: 'https://bandcamp.com/EmbeddedPlayer/' + m[1].toLowerCase() + '=' + m[2] + '/size=large/bgcol=' + BC_BG +
+           '/linkcol=' + BC_LINK + '/artwork=small/tracklist=' + (isAlbum ? 'true' : 'false') + '/transparent=true/'
+    };
+  }
+
+  /* "Now playing": the shelf row steps aside for the Bandcamp player, with a Back button. */
+  var shelfTitle = '', shelfHint = '', lastBtn = null;
+  function play(name, bc, btn) {
+    lastBtn = btn; shelfTitle = $('rs-title').textContent; shelfHint = $('rs-hint').textContent;
+    $('rs-title').textContent = 'Now playing'; $('rs-hint').textContent = '';
+    var now = $('rs-now'); now.textContent = '';
+    var back = el('button', 'rs-back', '← Back to ' + (shelfTitle ? shelfTitle.toLowerCase().replace(/^newest /, '') : plural));
+    back.type = 'button'; back.addEventListener('click', stop);
+    now.appendChild(back);
+    var f = el('iframe');
+    f.src = bc.src;                                              // only a rebuilt bandcamp.com player address is ever used
+    f.title = 'Listen to ' + name + ' on Bandcamp';
+    f.setAttribute('seamless', '');
+    if (bc.album) { f.style.flex = '1'; f.style.minHeight = '140px'; } else f.style.height = '120px';
+    now.appendChild(f);
+    var note = el('p', 'rs-note', 'Full songs on Bandcamp. ');
+    if (bc.page) { var a = el('a', null, 'Open on Bandcamp'); a.href = bc.page; a.target = '_blank'; a.rel = 'noopener'; note.appendChild(a); }
+    now.appendChild(note);
+    $('rs-row').style.display = 'none'; now.style.display = 'flex';
+    back.focus();
+  }
+  function stop() {
+    var now = $('rs-now'); if (now.style.display !== 'flex') return;
+    now.style.display = 'none'; now.textContent = '';               // removing the player stops the music
+    $('rs-row').style.display = '';
+    $('rs-title').textContent = shelfTitle; $('rs-hint').textContent = shelfHint;
+    if (lastBtn) lastBtn.focus();
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') stop(); });
 
   /* Sizes the covers to the embed box, so the row still fits when Google Sites shrinks the box on phones. */
   function fit() {
