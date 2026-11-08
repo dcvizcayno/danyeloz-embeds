@@ -2,8 +2,15 @@
   "song_csv": "https://docs.google.com/spreadsheets/d/1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw/gviz/tq?tqx=out:csv&gid=0",
   "bandcamp_home": "https://danyeloz.bandcamp.com/",
   "experiments": {
-    "hook": ["question", "story", "invite", "behind"],
-    "link": ["youtube", "bandcamp"]
+    "hook": [
+      "question",
+      "story",
+      "invite",
+      "behind"
+    ],
+    "link": [
+      "bandcamp"
+    ]
   },
   "min_samples": 3,
   "explore_rate": 0.2,
@@ -16,5 +23,7 @@
     "No em dashes. Avoid the words narrator, delve, tapestry and foster.",
     "At most one emoji and at most one hashtag. Zero is fine.",
     "Never invent facts about the song that are not in the description."
-  ]
+  ],
+  "require_youtube": false,
+  "_link_note": "Bandcamp is the priority link. Add \"youtube\" to experiments.link to test YouTube links on songs that have a video."
 }

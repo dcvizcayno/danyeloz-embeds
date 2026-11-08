@@ -1,6 +1,6 @@
 # Danyel OZ X post agent
 
-Picks a song from the Song Database (only songs with both `bandcamp_embed` and `yt_video_link`), drafts an X post, and waits for your OK.
+Picks a song from the Song Database (any song with a `bandcamp_embed`), drafts an X post that links to its Bandcamp page, and waits for your OK.
 
 ## How it works
 
@@ -10,7 +10,7 @@ Picks a song from the Song Database (only songs with both `bandcamp_embed` and `
    - Tick **Revise** and you get a new version in the same issue. Comment a note first ("shorter", "mention the acoustic guitar") and it follows the note.
    - You can also edit the draft text in the issue yourself, then tick Post.
 3. **Every Monday at 9:23 AM** (`x-metrics.yml`) it pulls views, likes, replies, reposts and link clicks, updates `playbook.json`, and opens a weekly report issue.
-4. **It learns.** Every approach (question, story, invite, behind) and link type (YouTube, Bandcamp) gets tried at least 3 times. After that it mostly uses the winners and still experiments 20% of the time.
+4. **It learns.** Every approach (question, story, invite, behind) gets tried at least 3 times. Bandcamp is the link by default; add `"youtube"` to `experiments.link` in `config.json` to also test YouTube on songs that have a video. After that it mostly uses the winners and still experiments 20% of the time.
 
 Every song gets a turn before any song repeats. Only you (the repo owner) can approve. Ticks from anyone else are ignored.
 

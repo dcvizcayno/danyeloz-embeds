@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Danyel OZ X post agent.
+"""Danyel OZ X post agent. Bandcamp first: any song with a bandcamp_embed qualifies.
 
 Commands:
   draft            pick a song, write a post, open an approval issue
@@ -81,7 +81,7 @@ def songs():
     for r in csv.DictReader(io.StringIO(text)):
         yt = (r.get('yt_video_link') or '').strip()
         bc = (r.get('bandcamp_embed') or '').strip()
-        if not (yt and bc):
+        if not bc or (CONFIG.get('require_youtube') and not yt):
             continue
         m = re.search(r'href="(https://[^"]*bandcamp\.com/[^"]+)"', bc)
         bc_url = m.group(1) if m else CONFIG['bandcamp_home']
@@ -165,15 +165,15 @@ TEMPLATES = {
 
 
 def write_post(song, hook, link, note=''):
-    url = song['youtube'] if link == 'youtube' else song['bandcamp']
+    url = song['youtube'] if (link == 'youtube' and song['youtube']) else song['bandcamp']
     budget = 280 - 24  # X counts every link as 23 characters, plus a space
     if ANTHROPIC_KEY:
         text = write_with_claude(song, hook, link, note, budget)
         if text:
             return text.strip() + '\n' + url
-    line = first_sentences(song['description']) or f'A {song["genre"].lower() or "new"} song I needed to write.'
+    line = first_sentences(song['description']) or f'A {(song["genre"] or "Danyel OZ").split("/")[0].lower()} song for the quiet moments.'
     tpl = random.choice(TEMPLATES[hook] if hook in TEMPLATES else TEMPLATES['invite'])
-    text = tpl.format(title=song['title'], line=line, line_lower=line[:1].lower() + line[1:],
+    text = tpl.format(title=song['title'], line=line, line_lower=line if re.match(r"I\b", line) else line[:1].lower() + line[1:],
                       type_lower=(song['type'] or 'single').lower(),
                       genre_cap=(song['genre'] or 'A').split('/')[0], genre_lower=(song['genre'] or 'music').lower())
     if len(text) > budget:
@@ -294,9 +294,11 @@ def cmd_draft():
         return
     pool = songs()
     if not pool:
-        raise SystemExit('No songs with both bandcamp_embed and yt_video_link.')
+        raise SystemExit('No songs with a bandcamp_embed.')
     song = pick_song(pool, log)
     hook, link = choose(playbook, 'hook'), choose(playbook, 'link')
+    if link == 'youtube' and not song['youtube']:
+        link = 'bandcamp'
     d = {'song': song['title'], 'hook': hook, 'link': link, 'version': 1, 'text': write_post(song, hook, link)}
     issue = gh('POST', f'/repos/{REPO}/issues', {
         'title': f'X draft: {song["title"]}', 'body': issue_body(d),
