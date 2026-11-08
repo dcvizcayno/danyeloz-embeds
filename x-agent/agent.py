@@ -94,7 +94,7 @@ def songs():
             'type': (r.get('release_type') or '').strip(),
             'date': (r.get('release_date') or '').strip(),
             'description': (r.get('song_description') or '').strip(),
-            'youtube': yt.split('&')[0],
+            'youtube': re.sub(r'[?&](si|feature|pp)=[^&]*', '', yt).replace('&', '?', 1) if 'youtu.be' in yt else yt.split('&')[0],
             'bandcamp': bc_url,
         })
     return out
