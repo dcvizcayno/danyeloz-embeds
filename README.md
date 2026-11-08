@@ -30,3 +30,4 @@ Each page has a **Settings** block at the top of its script.
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
 The data entry app lives in the private repo `DanyelOZ-Official-Website`.
 - `footer.html`: site footer. LISTEN EVERYWHERE pills (4 shown, the rest behind +N more) and the copyright line.
+- `x-dashboard.html`: X post performance. The agent itself lives in `x-agent/` (see its README).

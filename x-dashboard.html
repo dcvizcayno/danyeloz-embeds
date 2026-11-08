@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Danyel OZ · X posts</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#050505;color:#eee;font-family:'Open Sans',sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px}
+  h1{font-family:Oswald,sans-serif;letter-spacing:.1em;font-size:22px;margin:0 0 4px}
+  .sub{color:#999;font-size:13px;margin-bottom:22px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .tile{background:#141414;border:1px solid #222;border-radius:10px;padding:14px}
+  .tile b{display:block;font-size:24px;color:#fff}
+  .tile span{font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.06em}
+  h2{font-family:Oswald,sans-serif;font-size:15px;letter-spacing:.1em;color:#f26b6b;margin:24px 0 10px}
+  .bars{display:grid;grid-template-columns:110px 1fr 70px;gap:6px 10px;align-items:center;font-size:13px}
+  .bar{height:12px;background:#d4433f;border-radius:3px;min-width:2px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #1f1f1f;vertical-align:top}
+  th{color:#999;font-weight:600}
+  td a{color:#f26b6b}
+  .empty{background:#141414;border:1px dashed #333;border-radius:10px;padding:22px;color:#aaa;text-align:center}
+  .tag{font-size:11px;background:#222;border-radius:4px;padding:2px 6px;margin-left:4px;color:#bbb}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>X POSTS</h1>
+  <div class="sub" id="sub">Loading…</div>
+  <div id="app"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const bust = '?t=' + Date.now();
+Promise.all([
+  fetch('data/x-posts.json' + bust).then(r => r.json()).catch(() => []),
+  fetch('x-agent/playbook.json' + bust).then(r => r.json()).catch(() => ({}))
+]).then(([log, pb]) => {
+  const posts = log.filter(p => p.status === 'posted');
+  const real = posts.filter(p => !p.test), scored = real.filter(p => p.score != null);
+  $('#sub').textContent = pb.updated ? 'Numbers last updated ' + new Date(pb.updated).toLocaleString() : 'Numbers update every Monday morning.';
+  if (!posts.length) {
+    $('#app').innerHTML = '<div class="empty">No posts yet. Once you tick <b>Post</b> on a draft, it shows up here.</div>';
+    return;
+  }
+  const sum = k => scored.reduce((a, p) => a + (p.metrics[k] || 0), 0);
+  const avg = scored.length ? (scored.reduce((a, p) => a + p.score, 0) / scored.length).toFixed(1) : '–';
+  let html = '<div class="tiles">' + [
+    [real.length, 'Posts'], [sum('impression_count').toLocaleString(), 'Views'],
+    [sum('like_count') + sum('retweet_count') + sum('reply_count'), 'Likes + reposts + replies'],
+    [sum('url_link_clicks'), 'Link clicks'], [avg, 'Avg score']
+  ].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('') + '</div>';
+  const bars = (title, obj) => {
+    const rows = Object.entries(obj || {}).sort((a, b) => b[1].score - a[1].score);
+    if (!rows.length) return '';
+    const max = Math.max(...rows.map(r => r[1].score), 1);
+    return `<h2>${title}</h2><div class="bars">` + rows.map(([k, v]) =>
+      `<div>${esc(k)}</div><div class="bar" style="width:${100 * v.score / max}%"></div><div>${v.score} <span style="color:#777">n=${v.n}</span></div>`).join('') + '</div>';
+  };
+  html += bars('WHICH APPROACH WORKS', pb.hook) + bars('YOUTUBE OR BANDCAMP LINK', pb.link) + bars('BEST DAY', pb.weekday);
+  html += '<h2>EVERY POST</h2><table><tr><th>When</th><th>Song</th><th>Post</th><th>Views</th><th>Score</th></tr>' +
+    posts.slice().reverse().map(p => `<tr><td>${esc(p.posted_at.slice(0, 16).replace('T', ' '))}</td>
+      <td>${esc(p.song)}<br><span class="tag">${esc(p.hook)}</span><span class="tag">${esc(p.link)}</span>${p.test ? '<span class="tag">test</span>' : ''}</td>
+      <td>${p.test ? esc(p.text) : `<a href="https://x.com/i/web/status/${esc(p.id)}" target="_blank" rel="noopener">${esc(p.text)}</a>`}</td>
+      <td>${(p.metrics && p.metrics.impression_count) || '–'}</td><td>${p.score ?? '–'}</td></tr>`).join('') + '</table>';
+  $('#app').innerHTML = html;
+});
+</script>
+</body>
+</html>

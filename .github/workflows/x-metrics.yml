@@ -1,0 +1,25 @@
+name: X weekly report
+on:
+  schedule:
+    - cron: '23 1 * * 1'   # Monday 9:23 AM Manila
+  workflow_dispatch:
+permissions:
+  issues: write
+  contents: write
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 x-agent/agent.py metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+      - run: |
+          git config user.name "Danyel OZ X agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/x-posts.json x-agent/playbook.json
+          git diff --cached --quiet || (git commit -m "Update X metrics and playbook" && git pull --rebase && git push)
