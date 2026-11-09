@@ -5,12 +5,13 @@ Commands:
   draft            pick a song, write a post, open an approval issue
   handle           react to a ticked box on an approval issue (Post / Revise)
   metrics          pull numbers for logged posts, update the playbook, open a weekly report
+  release          automatic release posts at 1 AM Manila: "coming soon" 7 days ahead, "out now" on the day
 
 Runs in GitHub Actions. Standard library only.
 Without X keys it runs in test mode: everything works except the real post.
 """
 import base64, csv, hashlib, hmac, io, json, os, random, re, sys, time, urllib.parse, urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG = json.load(open(os.path.join(ROOT, 'x-agent', 'config.json')))
@@ -72,19 +73,27 @@ def save(path, obj):
 
 
 # ---------- songs ----------
-def songs():
+def sheet_rows():
     if os.environ.get('SONGS_CSV'):
         text = open(os.environ['SONGS_CSV'], encoding='utf-8').read()
     else:
         _, text = http('GET', CONFIG['song_csv'])
+    return list(csv.DictReader(io.StringIO(text)))
+
+
+def bandcamp_url(code):
+    m = re.search(r'href="(https://[^"]*bandcamp\.com/[^"]+)"', code or '')
+    return m.group(1) if m else ''
+
+
+def songs():
     out = []
-    for r in csv.DictReader(io.StringIO(text)):
+    for r in sheet_rows():
         yt = (r.get('yt_video_link') or '').strip()
         bc = (r.get('bandcamp_embed') or '').strip()
         if not bc or (CONFIG.get('require_youtube') and not yt):
             continue
-        m = re.search(r'href="(https://[^"]*bandcamp\.com/[^"]+)"', bc)
-        bc_url = m.group(1) if m else CONFIG['bandcamp_home']
+        bc_url = bandcamp_url(bc) or CONFIG['bandcamp_home']
         title = (r.get('song_title') or '').strip()
         if not title:
             continue
@@ -102,7 +111,7 @@ def songs():
 
 def pick_song(all_songs, log):
     """Every eligible song gets a turn before any song repeats."""
-    posted = [p['song'] for p in log if p.get('status') == 'posted']
+    posted = [p['song'] for p in log if p.get('status') == 'posted' and p.get('kind') != 'release']
     cycle = len(posted) % max(1, len(all_songs))
     recent = set(posted[-cycle:]) if cycle else set()
     fresh = [s for s in all_songs if s['title'] not in recent] or all_songs
@@ -354,7 +363,8 @@ def cmd_metrics():
             p['metrics'] = fresh[p['id']]
             p['score'] = score(p['metrics'])
     save(LOG_PATH, log)
-    scored = [p for p in live if p.get('score') is not None]
+    # Release posts get numbers too, but stay out of the playbook: their time and wording are fixed.
+    scored = [p for p in live if p.get('score') is not None and p.get('kind') != 'release']
     playbook = {}
     for dim, key in (('hook', 'hook'), ('link', 'link'), ('hour', 'hour'), ('weekday', 'weekday')):
         groups = {}
@@ -415,5 +425,136 @@ def cmd_check():
         gh('POST', f'/repos/{REPO}/issues', {'title': 'X key check', 'body': body, 'assignees': [OWNER]})
 
 
+# ---------- release posts (automatic, no approval) ----------
+SOON_DAYS = 7
+
+RELEASE_TEMPLATES = {
+    # Fallback only (used when no ANTHROPIC_API_KEY). Built from the song's own story line.
+    'soon': ['{line}\n\n"{title}" comes out {when}. Pre-order it on Bandcamp. #NewMusic',
+             '"{title}" comes out {when}.\n\n{line}\n\nPre-order on Bandcamp. #NewMusic'],
+    'soon_bare': ['New song {when}: "{title}". Pre-order it on Bandcamp. #NewMusic'],
+    'out': ['"{title}" is out today.\n\n{line} #NewMusic',
+            'Today is the day. "{title}" is out now.\n\n{line} #NewMusic'],
+    'out_bare': ['"{title}" is out today. Headphones on. #NewMusic'],
+}
+
+
+def today_manila():
+    return date.fromisoformat(os.environ['TODAY']) if os.environ.get('TODAY') else datetime.now(MANILA).date()
+
+
+def when_text(left):
+    return 'tomorrow' if left == 1 else 'in a week' if left == 7 else f'in {left} days'
+
+
+def write_release(song, stage, left, url):
+    budget = 280 - 24
+    if ANTHROPIC_KEY:
+        text = write_release_with_claude(song, stage, left, budget)
+        if text:
+            return text.strip() + '\n' + url
+    line = first_sentences(song['description'], 140)
+    key = stage if line else stage + '_bare'
+    text = random.choice(RELEASE_TEMPLATES[key]).format(title=song['title'], line=line, when=when_text(left))
+    if len(text) > budget:
+        text = text[:budget - 1].rsplit(' ', 1)[0] + '…'
+    return text + '\n' + url
+
+
+def write_release_with_claude(song, stage, left, budget):
+    rules = '\n'.join('- ' + r for r in CONFIG['voice_rules'])
+    moment = (f'announce that the song comes out {when_text(left)} and that it can be pre-ordered on Bandcamp'
+              if stage == 'soon' else 'announce that the song is out today')
+    prompt = f"""Write one X post for musician Danyel OZ. The goal: {moment}.
+Song: "{song['title']}" ({song['genre']}, {song['type']}, release date {song['date']})
+About the song: {song['description'][:1500]}
+The Bandcamp link is added after your text, so do not include any link.
+Voice rules:
+{rules}
+Hard limit: {budget} characters. Output only the post text."""
+    code, res = http('POST', 'https://api.anthropic.com/v1/messages', {
+        'model': CONFIG['claude_model'], 'max_tokens': 400,
+        'messages': [{'role': 'user', 'content': prompt}]},
+        {'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01'})
+    if code >= 300:
+        print('Claude writer failed, using templates:', code, res)
+        return ''
+    text = ''.join(b.get('text', '') for b in res.get('content', [])).strip().strip('"')
+    return text.replace('\u2014', ',').replace('\u2013', '-')[:budget]
+
+
+def release_done(log):
+    """Which (song, stage) posts already went out: from the log, and from the notice Issues as a second check."""
+    done = {(p.get('song'), p.get('release')) for p in log if p.get('kind') == 'release' and p.get('status') == 'posted'}
+    if GH_TOKEN:
+        for it in gh('GET', f'/repos/{REPO}/issues?labels=x-release&state=all&per_page=100'):
+            m = re.search(r'<!-- release:(\{.*?\}) -->', it.get('body') or '')
+            if m:
+                k = json.loads(m.group(1))
+                done.add((k.get('song'), k.get('stage')))
+    return done
+
+
+def cmd_release():
+    """Runs every night at 1 AM Manila. Posts at most one release post per night, without approval:
+    'out' when a song's release date is today, otherwise 'soon' when a song is 1 to 7 days away.
+    Each song gets each post once. A missed night is not made up later, so nothing says "out today" on the wrong day."""
+    log = load(LOG_PATH, [])
+    today = today_manila()
+    done = release_done(log)
+    due = []
+    for r in sheet_rows():
+        title = (r.get('song_title') or '').strip()
+        m = re.match(r'(\d{4}-\d{2}-\d{2})', (r.get('release_date') or '').strip())
+        if not title or not m:
+            continue
+        left = (date.fromisoformat(m.group(1)) - today).days
+        stage = 'out' if left == 0 else 'soon' if 1 <= left <= SOON_DAYS else ''
+        if stage and (title, stage) not in done:
+            due.append((0 if stage == 'out' else 1, abs(left), title, stage, left, r))
+    if not due:
+        print('No release post due today.')
+        return
+    due.sort(key=lambda x: x[:3])
+    _, _, title, stage, left, r = due[0]
+    url = bandcamp_url(r.get('bandcamp_embed'))
+    if not url:
+        msg = (f'"{title}" comes out {r.get("release_date")}, but its row has no Bandcamp code, so the '
+               f'{"coming soon" if stage == "soon" else "out now"} post was skipped. Add the code in the admin app '
+               'and it goes out at the next 1 AM run.')
+        print(msg)
+        if GH_TOKEN and not os.environ.get('DRY_RUN'):
+            open_ = gh('GET', f'/repos/{REPO}/issues?labels=x-release-skipped&state=open')
+            if not any(title in (i.get('title') or '') for i in open_):
+                gh('POST', f'/repos/{REPO}/issues', {'title': f'Release post skipped: {title}', 'body': msg,
+                                                      'labels': ['x-release-skipped'], 'assignees': [OWNER]})
+        return
+    song = {'title': title, 'genre': (r.get('song_genre') or '').strip(), 'type': (r.get('release_type') or '').strip(),
+            'date': (r.get('release_date') or '').strip(), 'description': (r.get('song_description') or '').strip()}
+    text = write_release(song, stage, left, url)
+    if os.environ.get('DRY_RUN'):
+        print(f'DRY RUN ({stage}, {left} days):\n{text}')
+        return
+    res = x_post(text)
+    now = datetime.now(MANILA)
+    log.append({'id': res['id'], 'song': title, 'hook': 'release-' + stage, 'link': 'bandcamp', 'kind': 'release',
+                'release': stage, 'text': text, 'posted_at': now.isoformat(timespec='minutes'), 'hour': now.hour,
+                'weekday': now.strftime('%a'), 'revisions': 0, 'status': 'posted', 'test': bool(res.get('test')),
+                'metrics': {}, 'score': None})
+    save(LOG_PATH, log)
+    link = '' if res.get('test') else f'\n\nhttps://x.com/i/web/status/{res["id"]}'
+    label = 'coming soon' if stage == 'soon' else 'out now'
+    if GH_TOKEN:
+        meta = json.dumps({'song': title, 'stage': stage})
+        it = gh('POST', f'/repos/{REPO}/issues', {
+            'title': f'Posted to X: {title} ({label})',
+            'body': ('🧪 Test mode: logged, nothing went to X.' if res.get('test') else '✅ Posted automatically at 1 AM Manila.')
+                    + link + f'\n\n> {text}\n\n<!-- release:{meta} -->',
+            'labels': ['x-release'], 'assignees': [OWNER]})
+        gh('PATCH', f'/repos/{REPO}/issues/{it["number"]}', {'state': 'closed'})
+    print('POSTED')
+
+
 if __name__ == '__main__':
-    {'draft': cmd_draft, 'handle': cmd_handle, 'metrics': cmd_metrics, 'check': cmd_check}[sys.argv[1]]()
+    {'draft': cmd_draft, 'handle': cmd_handle, 'metrics': cmd_metrics, 'check': cmd_check,
+     'release': cmd_release}[sys.argv[1]]()
