@@ -389,5 +389,31 @@ def cmd_metrics():
         'body': '\n'.join(lines), 'labels': ['x-report'], 'assignees': [OWNER]})
 
 
+def cmd_check():
+    """Confirm the X keys work without posting anything."""
+    lines = ['**X key check**']
+    for k, v in X_KEYS.items():
+        lines.append(f'- `{k}`: ' + ('found' if v else '**missing**'))
+    if TEST_MODE:
+        lines.append('\nStill in test mode: add the missing secret(s) and run the check again.')
+    else:
+        url = 'https://api.x.com/2/users/me'
+        code, res = http('GET', url, headers={'Authorization': oauth_header('GET', url)})
+        if code == 200:
+            lines.append(f"\n✅ Signed in to X as **@{res['data']['username']}**. Test mode is off: ticking Post now posts for real.")
+        else:
+            hint = {401: 'The keys do not match each other. Regenerate the Access Token and Secret after the Consumer Keys and update the secrets.',
+                    402: 'X says the account needs credits. Add some in the X Developer Console.',
+                    403: 'X refused. Check the app is in a Project and has Read and write permission.'}.get(code, '')
+            lines.append(f'\n❌ X answered {code}: `{json.dumps(res)[:300]}`\n\n{hint}')
+    body = '\n'.join(lines)
+    print(body)
+    drafts = gh('GET', f'/repos/{REPO}/issues?labels=x-draft&state=open')
+    if drafts:
+        gh('POST', f"/repos/{REPO}/issues/{drafts[0]['number']}/comments", {'body': body})
+    else:
+        gh('POST', f'/repos/{REPO}/issues', {'title': 'X key check', 'body': body, 'assignees': [OWNER]})
+
+
 if __name__ == '__main__':
-    {'draft': cmd_draft, 'handle': cmd_handle, 'metrics': cmd_metrics}[sys.argv[1]]()
+    {'draft': cmd_draft, 'handle': cmd_handle, 'metrics': cmd_metrics, 'check': cmd_check}[sys.argv[1]]()
