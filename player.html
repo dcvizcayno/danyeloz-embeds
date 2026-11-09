@@ -45,7 +45,8 @@
 <script>
 (function () {
   /* ================= Settings ================= */
-  var SONG       = 'latest';          // 'latest', or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
+  var SONG       = 'latest';          // 'latest' = newest release date in your Song Database (switches at midnight Manila),
+                                      // or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
   var LABEL      = 'auto';            // 'auto' = "Latest release" or "Featured song". Or any text, or '' to hide
   var NEW_DAYS   = 14;                // show the NEW badge for this many days (0 = never)
   var SHOW_LINKS = true;              // platform buttons under the player
@@ -66,7 +67,22 @@
 
   function $(id) { return document.getElementById(id); }
   function norm(s) { return String(s || '').toLowerCase().replace(/ - (single|ep)$/, '').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
-  function fmtDate(d) { return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); }
+  function fmtDate(d) { return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }); }
+  var TIME_ZONE = 'Asia/Singapore';     // Manila and Singapore share this clock
+  function todaySG() { return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date()); } // YYYY-MM-DD
+  function isoDate(v) { var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[0] : ''; }
+  function dayOf(iso) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+  /* The newest song in the Song Database whose release date is today or earlier (Manila time).
+     Same day: a song with a Bandcamp code wins, then the one higher up in the sheet. */
+  function latestRow(rows) {
+    var today = todaySG();
+    var bc = function (r) { return /bandcamp\.com\/EmbeddedPlayer/i.test(r.bandcamp_embed || '') ? 1 : 0; };
+    return rows.map(function (r, i) { return { r: r, i: i, d: isoDate(r.release_date) }; })
+      .filter(function (x) { return x.d && x.d <= today && x.r.song_title; })
+      .sort(function (a, b) { return b.d.localeCompare(a.d) || bc(b.r) - bc(a.r) || a.i - b.i; })
+      .map(function (x) { return x.r; })[0] || null;
+  }
+
   function parseCSV(t) {
     var rows = [], row = [], cur = '', q = false;
     for (var i = 0; i < t.length; i++) {
@@ -88,39 +104,31 @@
     return m ? m[1] : '';
   }
 
-  /* Picks the song: Apple's newest release, or the one named in SONG. */
-  function pick(apple, rows) {
-    if (String(SONG).toLowerCase() === 'latest') {
-      var rel = (apple.results || []).filter(function (x) { return x.wrapperType === 'collection'; })
-        .sort(function (a, b) { return new Date(b.releaseDate) - new Date(a.releaseDate); })[0];
-      if (!rel) return null;
-      var name = rel.collectionName.replace(/ - (Single|EP)$/, '');
-      var row = rows.filter(function (r) { return String(r.song_id) === String(rel.collectionId); })[0] ||
-                rows.filter(function (r) { return norm(r.song_title) === norm(name); })[0] || {};
-      return { id: String(rel.collectionId), title: row.song_title || name, date: new Date(rel.releaseDate),
-               appleUrl: rel.collectionViewUrl, row: row };
+  /* Picks the song from your Song Database: the latest release, or the one named in SONG. */
+  function pick(rows) {
+    var r2;
+    if (String(SONG).toLowerCase() === 'latest') r2 = latestRow(rows);
+    else {
+      var want = norm(SONG);
+      r2 = rows.filter(function (r) { return String(r.song_id) === String(SONG).trim(); })[0] ||
+           rows.filter(function (r) { return norm(r.song_title) === want; })[0];
     }
-    var want = norm(SONG);
-    var r2 = rows.filter(function (r) { return String(r.song_id) === String(SONG).trim(); })[0] ||
-             rows.filter(function (r) { return norm(r.song_title) === want; })[0];
     if (!r2) return null;
-    var d = r2.release_date ? new Date(r2.release_date + 'T00:00:00') : null;
-    return { id: appleIdFrom(r2), title: r2.song_title, date: d && !isNaN(d) ? d : null, appleUrl: r2.appl_music_link, row: r2 };
+    var iso = isoDate(r2.release_date);
+    return { id: appleIdFrom(r2), title: r2.song_title, date: iso ? dayOf(iso) : null, appleUrl: r2.appl_music_link, row: r2 };
   }
 
-  var appleReq = fetch('https://itunes.apple.com/lookup?id=' + ARTIST_ID + '&entity=album&sort=recent&limit=50&country=' + STOREFRONT)
-    .then(function (r) { return r.json(); }).catch(function () { return {}; });
   var sheetReq = fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).catch(function () { return []; });
 
-  Promise.all([appleReq, sheetReq]).then(function (res) {
-    var s = pick(res[0], res[1]);
+  sheetReq.then(function (rows) {
+    var s = pick(rows);
     if (!s) throw new Error('Song not found');
     var latest = String(SONG).toLowerCase() === 'latest';
 
     var label = LABEL === 'auto' ? (latest ? 'Latest release' : 'Featured song') : LABEL;
     $('ozp-label').textContent = label; if (!label) $('ozp-label').style.display = 'none';
     $('ozp-title').textContent = s.title;
-    var age = s.date ? (Date.now() - s.date.getTime()) / 86400000 : null;
+    var age = s.date ? (dayOf(todaySG()).getTime() - s.date.getTime()) / 86400000 : null;
     if (age != null && NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) {
       var b = document.createElement('span'); b.className = 'ozp-new'; b.textContent = 'NEW'; $('ozp-title').appendChild(b);
     }

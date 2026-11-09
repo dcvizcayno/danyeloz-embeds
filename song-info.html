@@ -43,7 +43,8 @@
 <script>
 (function () {
   /* ================= Settings ================= */
-  var SONG         = 'latest';   // 'latest', or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
+  var SONG         = 'latest';   // 'latest' = newest release date in your Song Database (switches at midnight Manila),
+                                 // or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
   var TITLE_PREFIX = '';         // text before the song title, e.g. 'Title: ' ('' = just the title)
   var SHOW = {
     art:   false,   // cover image (song_arts)
@@ -64,11 +65,23 @@
   var READ_LESS  = 'Show less';
   /* ============================================ */
 
-  var ARTIST_ID  = '1706653995';
-  var STOREFRONT = 'us';
   var SHEET_ID   = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
   var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
 
+  var TIME_ZONE = 'Asia/Singapore';     // Manila and Singapore share this clock
+  function todaySG() { return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date()); } // YYYY-MM-DD
+  function isoDate(v) { var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[0] : ''; }
+  function dayOf(iso) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+  /* The newest song in the Song Database whose release date is today or earlier (Manila time).
+     Same day: a song with a Bandcamp code wins, then the one higher up in the sheet. */
+  function latestRow(rows) {
+    var today = todaySG();
+    var bc = function (r) { return /bandcamp\.com\/EmbeddedPlayer/i.test(r.bandcamp_embed || '') ? 1 : 0; };
+    return rows.map(function (r, i) { return { r: r, i: i, d: isoDate(r.release_date) }; })
+      .filter(function (x) { return x.d && x.d <= today && x.r.song_title; })
+      .sort(function (a, b) { return b.d.localeCompare(a.d) || bc(b.r) - bc(a.r) || a.i - b.i; })
+      .map(function (x) { return x.r; })[0] || null;
+  }
   var root = document.getElementById('ozi');
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function norm(s) { return String(s || '').toLowerCase().replace(/ - (single|ep)$/, '').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
@@ -94,25 +107,18 @@
     return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600' : u;
   }
 
-  function pick(apple, rows) {
-    if (String(SONG).toLowerCase() === 'latest') {
-      var rel = (apple.results || []).filter(function (x) { return x.wrapperType === 'collection'; })
-        .sort(function (a, b) { return new Date(b.releaseDate) - new Date(a.releaseDate); })[0];
-      if (!rel) return null;
-      var name = rel.collectionName.replace(/ - (Single|EP)$/, '');
-      var row = rows.filter(function (r) { return String(r.song_id) === String(rel.collectionId); })[0] ||
-                rows.filter(function (r) { return norm(r.song_title) === norm(name); })[0] || {};
-      return { title: row.song_title || name, date: new Date(rel.releaseDate),
-               type: row.release_type || (/- EP$/.test(rel.collectionName) ? 'EP' : rel.trackCount > 1 ? 'Album' : 'Single'),
-               genre: row.song_genre || rel.primaryGenreName, appleUrl: rel.collectionViewUrl,
-               art: row.song_arts || (rel.artworkUrl100 || '').replace(/\/\d+x\d+bb\./, '/600x600bb.'), row: row };
+  /* Picks the song from your Song Database: the latest release, or the one named in SONG. */
+  function pick(rows) {
+    var r2;
+    if (String(SONG).toLowerCase() === 'latest') r2 = latestRow(rows);
+    else {
+      var want = norm(SONG);
+      r2 = rows.filter(function (r) { return String(r.song_id) === String(SONG).trim(); })[0] ||
+           rows.filter(function (r) { return norm(r.song_title) === want; })[0];
     }
-    var want = norm(SONG);
-    var r2 = rows.filter(function (r) { return String(r.song_id) === String(SONG).trim(); })[0] ||
-             rows.filter(function (r) { return norm(r.song_title) === want; })[0];
     if (!r2) return null;
-    var d = r2.release_date ? new Date(r2.release_date + 'T00:00:00') : null;
-    return { title: r2.song_title, date: d && !isNaN(d) ? d : null, type: r2.release_type, genre: r2.song_genre,
+    var iso = isoDate(r2.release_date);
+    return { title: r2.song_title, date: iso ? dayOf(iso) : null, type: r2.release_type, genre: r2.song_genre,
              appleUrl: r2.appl_music_link, art: r2.song_arts, row: r2 };
   }
 
@@ -153,7 +159,7 @@
       }
     }
 
-    if (SHOW.date && s.date) meta('Release Date', s.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }));
+    if (SHOW.date && s.date) meta('Release Date', s.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }));
     if (SHOW.type) meta('Release Type', s.type);
     if (SHOW.genre) meta('Genre', s.genre);
     if (SHOW.label) meta('Label', row.record_label);
@@ -179,15 +185,10 @@
     }
   }
 
-  var needApple = String(SONG).toLowerCase() === 'latest';
-  var appleReq = needApple
-    ? fetch('https://itunes.apple.com/lookup?id=' + ARTIST_ID + '&entity=album&sort=recent&limit=50&country=' + STOREFRONT)
-        .then(function (r) { return r.json(); }).catch(function () { return {}; })
-    : Promise.resolve({});
   var sheetReq = fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).catch(function () { return []; });
 
-  Promise.all([appleReq, sheetReq]).then(function (res) {
-    var s = pick(res[0], res[1]);
+  sheetReq.then(function (rows) {
+    var s = pick(rows);
     if (!s) { root.innerHTML = ''; root.appendChild(el('p', 'ozi-muted', 'Song details are on the way.')); return; }
     render(s);
   });
