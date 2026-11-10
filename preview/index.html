@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Home theme preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #fff; font-family: 'Oswald', Arial, sans-serif; }
+  .note { background: #111; color: #ffd2d6; font-size: 14px; letter-spacing: 1px; padding: 10px 16px; text-align: center; }
+  .bar { background: #000; color: #fff; font-size: 44px; text-transform: uppercase; padding: 22px 6vw; margin: 0; font-weight: 400; }
+  .red { background: #c64c45; }
+  .row { display: flex; flex-wrap: wrap; gap: 3vw; padding: 24px 4vw 40px; }
+  .row iframe { border: 0; flex: 1 1 360px; min-width: 0; }
+  .full { padding: 24px 4vw 40px; } .full iframe { border: 0; width: 100%; }
+  @media (max-width: 640px) { .bar { font-size: 28px; padding: 16px 5vw; } }
+</style>
+</head>
+<body>
+<p class="note">PREVIEW ONLY. Your live site is unchanged until you say go.</p>
+<h2 class="bar">Upcoming Release</h2>
+<div class="row">
+  <iframe src="upcoming-player.html" height="720" title="Upcoming player"></iframe>
+  <iframe src="upcoming-details.html" height="720" title="Upcoming details"></iframe>
+</div>
+<h2 class="bar">Latest Release</h2>
+<div class="row">
+  <iframe src="player.html" height="720" title="Latest player"></iframe>
+  <iframe src="song-info.html" height="720" title="Latest details"></iframe>
+</div>
+<h2 class="bar">Music Highlights</h2>
+<div class="full"><iframe src="music-highlights.html" height="1180" title="Music Highlights"></iframe></div>
+</body>
+</html>

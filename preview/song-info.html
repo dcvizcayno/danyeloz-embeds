@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Listen Now: Song Info</title>
+</head>
+<body>
+<!-- Danyel OZ: Song Info panel (embed 2 of 2)
+     Paste into Google Sites: Insert > Embed > Embed code.
+     Reusable: change SONG below to show the latest release or any song from your Song Database,
+     and turn each part on or off in SHOW. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  #ozi { padding: 0 4px; color: #111; font-family: 'Open Sans', Arial, sans-serif; }
+  .ozi-kicker { display: inline-block; font: 500 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 3px; text-transform: uppercase;
+    color: #fff; background: #e3122a; padding: 5px 11px; margin: 4px 0 14px; }
+  .ozi-title { font-family: 'Anton', Impact, sans-serif; font-size: 54px; line-height: .98; letter-spacing: 1px; font-weight: 400;
+    text-transform: uppercase; color: #111; margin: 0 0 18px; overflow-wrap: anywhere; }
+  .ozi-lead { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 400; font-size: 21px; line-height: 1.45;
+    color: #b0101f; margin: 0 0 18px; padding-left: 14px; border-left: 3px solid #e3122a; }
+  .ozi-story p { font-size: 15.5px; line-height: 1.75; margin: 0 0 14px; color: #222; }
+  .ozi-more { display: inline-block; background: none; border: 0; border-bottom: 2px solid #e3122a; padding: 0 0 3px; margin: 0 0 30px;
+    cursor: pointer; font: 500 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozi-more:hover, .ozi-more:focus-visible { color: #e3122a; outline: none; }
+  .ozi-metas { max-width: 440px; border-top: 2px solid #111; }
+  .ozi-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin: 0; padding: 10px 0;
+    border-bottom: 1px solid #e6e2e2; }
+  .ozi-meta .k { font: 500 11.5px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozi-meta .v { font: 400 17px 'Oswald', 'Arial Narrow', sans-serif; color: #111; text-align: right; }
+  .ozi-muted { font-size: 15px; color: #555; }
+  @media (max-width: 480px) {
+    .ozi-title { font-size: 36px; }
+    .ozi-lead { font-size: 18px; }
+    .ozi-story p { font-size: 14.5px; }
+    .ozi-meta .v { font-size: 15px; }
+  }
+  .ozi-art { display: block; width: 180px; max-width: 45%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; margin: 0 0 16px; }
+  .ozi-qr { margin-top: 18px; display: flex; align-items: center; gap: 14px; }
+  .ozi-qr-box { background: #fff; padding: 8px; border: 1px solid #e6e2e2; line-height: 0; }
+  .ozi-qr-box img, .ozi-qr-box canvas { width: 130px !important; height: 130px !important; }
+  .ozi-qr-text { font: 400 14px 'Oswald', sans-serif; letter-spacing: 1px; color: #333; max-width: 200px; }
+  .ozi-story:not([hidden]) + .ozi-more { margin-top: 0; }
+</style>
+
+<div id="ozi"><p class="ozi-muted">Loading…</p></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var SONG         = 'latest';   // 'latest' = newest release date in your Song Database (switches at midnight Manila),
+                                 // or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
+  var TITLE_PREFIX = '';         // text before the song title, e.g. 'Title: ' ('' = just the title)
+  var KICKER       = 'Out now';   // small red tag above the title ('' to hide)
+  var SHOW = {
+    art:   false,   // cover image (song_arts)
+    title: true,
+    lead:  true,    // first paragraph, in blue
+    story: true,    // the rest of the description
+    date:  true,
+    type:  true,
+    genre: true,
+    label: false,   // record label
+    isrc:  true,
+    upc:   false,
+    qr:    true
+  };
+  var EMPTY_TEXT = 'The story behind this song is coming soon.';
+  var COLLAPSE   = true;          // true = show the first paragraph, with "Read more…" for the rest
+  var READ_MORE    = 'Read the story';
+  var READ_LESS  = 'Show less';
+  /* ============================================ */
+
+  var SHEET_ID   = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
+  var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
+
+  var TIME_ZONE = 'Asia/Singapore';     // Manila and Singapore share this clock
+  function todaySG() { return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date()); } // YYYY-MM-DD
+  function isoDate(v) { var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[0] : ''; }
+  function dayOf(iso) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+  /* The newest song in the Song Database whose release date is today or earlier (Manila time).
+     Same day: a song with a Bandcamp code wins, then the one higher up in the sheet. */
+  function latestRow(rows) {
+    var today = todaySG();
+    var bc = function (r) { return /bandcamp\.com\/EmbeddedPlayer/i.test(r.bandcamp_embed || '') ? 1 : 0; };
+    return rows.map(function (r, i) { return { r: r, i: i, d: isoDate(r.release_date) }; })
+      .filter(function (x) { return x.d && x.d <= today && x.r.song_title; })
+      .sort(function (a, b) { return b.d.localeCompare(a.d) || bc(b.r) - bc(a.r) || a.i - b.i; })
+      .map(function (x) { return x.r; })[0] || null;
+  }
+  var root = document.getElementById('ozi');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function norm(s) { return String(s || '').toLowerCase().replace(/ - (single|ep)$/, '').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', q = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (q) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return rows.filter(function (r) { return r.join('').trim(); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o;
+    });
+  }
+  function isImage(u) { return /^https:\/\//i.test(u) && (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /drive\.google\.com|googleusercontent\.com|mzstatic\.com/i.test(u)); }
+  function imageUrl(u) {
+    if (!/drive\.google\.com/.test(u)) return u;
+    var m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600' : u;
+  }
+
+  /* Picks the song from your Song Database: the latest release, or the one named in SONG. */
+  function pick(rows) {
+    var r2;
+    if (String(SONG).toLowerCase() === 'latest') r2 = latestRow(rows);
+    else {
+      var want = norm(SONG);
+      r2 = rows.filter(function (r) { return String(r.song_id) === String(SONG).trim(); })[0] ||
+           rows.filter(function (r) { return norm(r.song_title) === want; })[0];
+    }
+    if (!r2) return null;
+    var iso = isoDate(r2.release_date);
+    return { title: r2.song_title, date: iso ? dayOf(iso) : null, type: r2.release_type, genre: r2.song_genre,
+             appleUrl: r2.appl_music_link, art: r2.song_arts, row: r2 };
+  }
+
+  var metaBox = null;
+  function meta(label, value) {
+    if (!value) return;
+    if (!metaBox || !metaBox.parentNode) { metaBox = el('div', 'ozi-metas'); root.appendChild(metaBox); }
+    var row = el('p', 'ozi-meta');
+    row.appendChild(el('span', 'k', label)); row.appendChild(el('span', 'v', value));
+    metaBox.appendChild(row);
+  }
+
+  function render(s) {
+    root.innerHTML = '';
+    var row = s.row;
+    if (SHOW.art && s.art && isImage(s.art)) {
+      var img = el('img', 'ozi-art'); img.alt = s.title + ' cover art'; img.src = imageUrl(s.art);
+      img.onerror = function () { img.remove(); };
+      root.appendChild(img);
+    }
+    if (KICKER) root.appendChild(el('p', 'ozi-kicker', KICKER));
+    if (SHOW.title) root.appendChild(el('h2', 'ozi-title', TITLE_PREFIX + s.title));
+
+    var paras = String(row.song_description || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
+    if (!paras.length && (SHOW.lead || SHOW.story)) root.appendChild(el('p', 'ozi-lead', EMPTY_TEXT));
+    if (paras.length && SHOW.lead) root.appendChild(el('p', 'ozi-lead', paras[0]));
+    if (paras.length > 1 && SHOW.story) {
+      var story = el('div', 'ozi-story');
+      paras.slice(1).forEach(function (p) {
+        var para = el('p');
+        p.split('\n').forEach(function (line, k) { if (k) para.appendChild(document.createElement('br')); para.appendChild(document.createTextNode(line)); });
+        story.appendChild(para);
+      });
+      root.appendChild(story);
+      if (COLLAPSE) {
+        story.hidden = true;
+        var more = el('button', 'ozi-more', READ_MORE);
+        more.type = 'button';
+        more.setAttribute('aria-expanded', 'false');
+        more.addEventListener('click', function () {
+          story.hidden = !story.hidden;
+          more.textContent = story.hidden ? READ_MORE : READ_LESS;
+          more.setAttribute('aria-expanded', String(!story.hidden));
+        });
+        root.appendChild(more);
+      }
+    }
+
+    if (SHOW.date && s.date) meta('Release Date', s.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }));
+    if (SHOW.type) meta('Release Type', s.type);
+    if (SHOW.genre) meta('Genre', s.genre);
+    if (SHOW.label) meta('Label', row.record_label);
+    if (SHOW.isrc) meta('ISRC', row.song_isrc);
+    if (SHOW.upc) meta('UPC', row.song_upc);
+
+    if (SHOW.qr) {
+      var qr = String(row.song_qr || '').trim();
+      if (qr) {
+        var wrap = el('div', 'ozi-qr'), box = el('div', 'ozi-qr-box');
+        wrap.appendChild(box); wrap.appendChild(el('div', 'ozi-qr-text', 'Scan to listen on your phone'));
+        root.appendChild(wrap);
+        if (isImage(qr)) {
+          var q = el('img'); q.alt = 'QR code for ' + s.title; q.src = imageUrl(qr);
+          q.onerror = function () { wrap.remove(); };
+          box.appendChild(q);
+        } else if (/^https?:\/\//i.test(qr) && typeof QRCode !== 'undefined') {
+          new QRCode(box, { text: qr, width: 260, height: 260, colorDark: '#000000', colorLight: '#ffffff' });
+        } else {
+          wrap.remove();
+        }
+      }
+    }
+  }
+
+  var sheetReq = fetch(SHEET_CSV).then(function (r) { return r.text(); }).then(parseCSV).catch(function () { return []; });
+
+  sheetReq.then(function (rows) {
+    var s = pick(rows);
+    if (!s) { root.innerHTML = ''; root.appendChild(el('p', 'ozi-muted', 'Song details are on the way.')); return; }
+    render(s);
+  });
+})();
+</script>
+
+</body>
+</html>
