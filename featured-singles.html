@@ -316,7 +316,7 @@
   /* ---------- data ---------- */
   Promise.all([get(SONGS_CSV), get(FEATURED_CSV), get(THEMES_CSV)]).then(function (res) {
     var songs = res[0].rows.filter(function (s) { return s.song_title; });
-    var withBc = songs.filter(function (s) { return bandcamp(s.bandcamp_embed); });
+    var withBc = songs.filter(function (s) { return bandcamp(s.bandcamp_embed) && /^\s*single\s*$/i.test(s.release_type || 'Single'); });   // singles only
     var feat = res[1].head.indexOf('position') >= 0 && res[1].head.indexOf('song_title') >= 0 ? res[1].rows : [];
     var list = [];
     feat.slice().sort(function (a, b) { return (Number(a.position) || 99) - (Number(b.position) || 99); }).forEach(function (f) {
@@ -326,7 +326,7 @@
     });
     if (!list.length) {   // nothing picked yet: the newest released singles that fans can play
       var now = today();
-      list = withBc.filter(function (s) { var d = isoDate(s.release_date); return (s.release_type || 'Single') === 'Single' && d && d <= now; })
+      list = withBc.filter(function (s) { var d = isoDate(s.release_date); return d && d <= now; })
         .sort(function (a, b) { return isoDate(b.release_date).localeCompare(isoDate(a.release_date)); }).slice(0, MAX);
     }
     // Hidden themes stay off the page.
