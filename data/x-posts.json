@@ -13,5 +13,22 @@
     "test": false,
     "metrics": {},
     "score": null
+  },
+  {
+    "id": "2119951440143659113",
+    "song": "Ursula",
+    "hook": "release-soon",
+    "link": "bandcamp",
+    "kind": "release",
+    "release": "soon",
+    "text": "\"Ursula\" comes out in 6 days.\n\nWhat if the person you should have chosen was standing right in front of you?\n\nPre-order on Bandcamp. #NewMusic\nhttps://danyeloz.bandcamp.com/track/ursula-2",
+    "posted_at": "2026-11-10T08:33+08:00",
+    "hour": 8,
+    "weekday": "Tue",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null
   }
 ]
