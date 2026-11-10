@@ -316,7 +316,7 @@
   }
 
   Promise.all([get(BASE + '&gid=0'), get(BASE + '&sheet=themes')]).then(function (res) {
-    var songs = res[0].rows.filter(function (s) { return s.song_title; });
+    var songs = res[0].rows.filter(function (s) { return s.song_title && /^\s*single\s*$/i.test(s.release_type || 'Single'); });   // singles only
     var raw = res[1].head.indexOf('theme') >= 0 ? res[1].rows : [];
     var themes = raw.filter(function (t) { return t.theme && !/^(false|no|0|hide|hidden)$/i.test(t.visible || ''); })
       .sort(function (a, b) { return (Number(a.slot) || 99) - (Number(b.slot) || 99); }).slice(0, 5)
