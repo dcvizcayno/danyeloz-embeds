@@ -87,6 +87,11 @@
 
   /* coming next */
   .al-next { background: var(--red); color: #fff; margin-top: 44px; }
+  .al-next.top { margin: 0 0 18px; }
+  .al-next.top .al-hero-in { padding: 28px 32px; gap: 32px; }
+  .al-next.top img { width: 180px; height: 180px; }
+  .al-next.top .al-h { font-size: 56px; }
+  .al-next.solo { margin: 0; }
   .al-next .al-hero-in { padding: 44px 32px; }
   .al-next img { width: 240px; height: 240px; object-fit: cover; box-shadow: 0 24px 50px rgba(0,0,0,.35); flex: none; background: rgba(0,0,0,.2); }
 
@@ -109,7 +114,8 @@
     .al-cv { width: 200px; height: 200px; }
     .al-hook { opacity: 1; transform: none; font-size: 20px; }
     .al-col-h h2, .al-num { font-size: 28px; }
-    .al-next img { width: 160px; height: 160px; }
+    .al-next img, .al-next.top img { width: 140px; height: 140px; }
+    .al-next.top .al-h { font-size: 38px; }
   }
 </style>
 
@@ -119,6 +125,7 @@
 (function () {
   /* ================= Settings ================= */
   var SHOW_JUMP  = true;            // the row of collection names at the top
+  var NEXT_ON_TOP = true;           // Coming next banner first; false puts it at the bottom
   var READ_MORE  = 'Read the story';
   var READ_LESS  = 'Show less';
   var PAGE_URL   = 'https://www.danyeloz.info/released/albums-original-music-stories';
@@ -129,6 +136,7 @@
   var BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
   var TIME_ZONE = 'Asia/Singapore';
   var RED = '#E3122A';
+  var ONLY_NEXT = /[?&]only=next(&|$)/.test(location.search);
   var root = document.getElementById('al');
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -281,8 +289,34 @@
   }
 
   /* ---------- page ---------- */
+  /* ---------- Coming next banner (also the whole page with ?only=next) ---------- */
+  function nextBanner(a, cls, isLatest) {
+    var n = el('section', 'al-hero al-next' + (cls ? ' ' + cls : '')); n.setAttribute('aria-label', isLatest ? 'Latest album' : 'Coming next');
+    var inner = el('div', 'al-hero-in');
+    if (a.cover) { var img = el('img'); img.src = a.cover; img.alt = a.title + ' cover'; img.onerror = function () { img.remove(); }; inner.appendChild(img); }
+    var info = el('div', 'al-info');
+    info.appendChild(el('div', 'al-script', isLatest ? 'Latest album' : 'Coming next'));
+    info.appendChild(el('h2', 'al-h', a.title));
+    var tags = el('div', 'al-tags');
+    var d1 = el('span', 'al-tag', isLatest ? 'Out now' : 'Out ' + longDate(a.date)); d1.style.background = '#fff'; d1.style.color = '#b0101f'; tags.appendChild(d1);
+    if (!isLatest) {
+      var days = Math.round((Date.parse(a.date) - Date.parse(today())) / 86400000);
+      var d2 = el('span', 'al-tag', days === 1 ? 'Tomorrow' : days + ' days to go'); d2.style.background = '#000'; d2.style.color = '#fff'; tags.appendChild(d2);
+    }
+    info.appendChild(tags);
+    if (a.paras.length) { var lp = el('p', 'al-lead', a.paras[0]); lp.style.color = '#fff'; info.appendChild(lp); }
+    var buyUrl = a.store || a.page;
+    if (buyUrl) {
+      var b = el('a', 'al-btn solid', isLatest ? 'Listen on Bandcamp' : 'Pre-order'); b.href = buyUrl; b.target = '_blank'; b.rel = 'noopener';
+      b.style.background = '#000'; b.style.setProperty('color', '#fff', 'important'); info.appendChild(b);
+    }
+    inner.appendChild(info); n.appendChild(inner);
+    return n;
+  }
+
   function render(hero, groups, next) {
     root.innerHTML = '';
+    if (next && NEXT_ON_TOP) root.appendChild(nextBanner(next, 'top', false));
     if (SHOW_JUMP && groups.length > 1) {
       var jump = el('nav', 'al-jump'); jump.setAttribute('aria-label', 'Collections');
       groups.forEach(function (g) { var l = el('a', null, g.name); l.href = '#' + g.id; jump.appendChild(l); });
@@ -334,23 +368,7 @@
       node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    if (next) {
-      var n = el('section', 'al-hero al-next'); n.setAttribute('aria-label', 'Coming next');
-      var inner = el('div', 'al-hero-in');
-      if (next.cover) { var img = el('img'); img.src = next.cover; img.alt = next.title + ' cover'; inner.appendChild(img); }
-      var info = el('div', 'al-info');
-      info.appendChild(el('div', 'al-script', 'Coming next'));
-      info.appendChild(el('h2', 'al-h', next.title));
-      var tags = el('div', 'al-tags');
-      var d1 = el('span', 'al-tag', 'Out ' + longDate(next.date)); d1.style.background = '#fff'; d1.style.color = '#b0101f'; tags.appendChild(d1);
-      var days = Math.round((Date.parse(next.date) - Date.parse(today())) / 86400000);
-      var d2 = el('span', 'al-tag', days === 1 ? 'Tomorrow' : days + ' days to go'); d2.style.background = '#000'; d2.style.color = '#fff'; tags.appendChild(d2);
-      info.appendChild(tags);
-      if (next.paras.length) { var lp = el('p', 'al-lead', next.paras[0]); lp.style.color = '#fff'; info.appendChild(lp); }
-      var buyUrl = next.store || next.page;
-      if (buyUrl) { var b = el('a', 'al-btn solid', 'Pre-order'); b.href = buyUrl; b.target = '_blank'; b.rel = 'noopener'; b.style.background = '#000'; b.style.setProperty('color', '#fff', 'important'); info.appendChild(b); }
-      inner.appendChild(info); n.appendChild(inner); root.appendChild(n);
-    }
+    if (next && !NEXT_ON_TOP) root.appendChild(nextBanner(next, '', false));
   }
 
   Promise.all([get(BASE + '&gid=0'), get(BASE + '&sheet=albums'), get(BASE + '&sheet=album_collections')]).then(function (res) {
@@ -399,6 +417,13 @@
     var next = ALL.filter(function (a) { return a.isFuture && a.kind !== 'single' && a.kind !== 'ep'; })
       .sort(function (a, b) { return a.date.localeCompare(b.date); })[0] || null;
 
+    if (ONLY_NEXT) {   // just the banner, for Home or Released; when nothing is coming it shows the latest album instead of an empty box
+      root.innerHTML = '';
+      if (next) root.appendChild(nextBanner(next, 'solo', false));
+      else if (hero) root.appendChild(nextBanner(hero, 'solo', true));
+      else root.appendChild(el('p', 'al-msg', 'New album news soon.'));
+      return;
+    }
     if (!hero && !groups.length && !next) { root.innerHTML = ''; root.appendChild(el('p', 'al-msg', 'Albums are on the way.')); return; }
     render(hero, groups, next);
   });
