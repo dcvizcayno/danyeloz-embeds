@@ -25,5 +25,8 @@
     "Never invent facts about the song that are not in the description."
   ],
   "require_youtube": false,
-  "_link_note": "Bandcamp is the priority link. Add \"youtube\" to experiments.link to test YouTube links on songs that have a video."
+  "_link_note": "Bandcamp is the priority link. Add \"youtube\" to experiments.link to test YouTube links on songs that have a video.",
+  "site_line": "Want more? Check my Official Site",
+  "site_url": "https://www.danyeloz.info/home",
+  "_site_note": "Added to the end of every post (drafts and release posts). Set site_line to \"\" to switch it off."
 }

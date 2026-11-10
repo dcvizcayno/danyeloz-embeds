@@ -173,21 +173,42 @@ TEMPLATES = {
 }
 
 
+def site_footer():
+    """'Want more? Check my Official Site' plus the site link, so new fans find the home page."""
+    line, url = CONFIG.get('site_line', '').strip(), CONFIG.get('site_url', '').strip()
+    return f'\n\n{line} {url}' if line and url.startswith('https://') else ''
+
+
+def post_budget():
+    # X counts every link as 23 characters. Song link: newline + 23. Footer: blank line + words + space + 23.
+    line = CONFIG.get('site_line', '').strip()
+    return 280 - 24 - ((len(line) + 3 + 23) if site_footer() else 0)
+
+
+def finish(text, url):
+    budget = post_budget()
+    text = text.strip()
+    if len(text) > budget:
+        text = text[:budget - 1].rsplit(' ', 1)[0] + '…'
+    return text + '\n' + url + site_footer()
+
+
 def write_post(song, hook, link, note=''):
     url = song['youtube'] if (link == 'youtube' and song['youtube']) else song['bandcamp']
-    budget = 280 - 24  # X counts every link as 23 characters, plus a space
+    budget = post_budget()
     if ANTHROPIC_KEY:
         text = write_with_claude(song, hook, link, note, budget)
         if text:
-            return text.strip() + '\n' + url
-    line = first_sentences(song['description']) or f'A {(song["genre"] or "Danyel OZ").split("/")[0].lower()} song for the quiet moments.'
+            return finish(text, url)
     tpl = random.choice(TEMPLATES[hook] if hook in TEMPLATES else TEMPLATES['invite'])
-    text = tpl.format(title=song['title'], line=line, line_lower=line if re.match(r"I\b", line) else line[:1].lower() + line[1:],
-                      type_lower=(song['type'] or 'single').lower(),
-                      genre_cap=(song['genre'] or 'A').split('/')[0], genre_lower=(song['genre'] or 'music').lower())
-    if len(text) > budget:
-        text = text[:budget - 1].rsplit(' ', 1)[0] + '…'
-    return text + '\n' + url
+    for limit in (150, 110, 70):  # shorten the story line before cutting the post
+        line = first_sentences(song['description'], limit) or f'A {(song["genre"] or "Danyel OZ").split("/")[0].lower()} song for the quiet moments.'
+        text = tpl.format(title=song['title'], line=line, line_lower=line if re.match(r"I\b", line) else line[:1].lower() + line[1:],
+                          type_lower=(song['type'] or 'single').lower(),
+                          genre_cap=(song['genre'] or 'A').split('/')[0], genre_lower=(song['genre'] or 'music').lower())
+        if len(text) <= budget:
+            break
+    return finish(text, url)
 
 
 def write_with_claude(song, hook, link, note, budget):
@@ -448,17 +469,20 @@ def when_text(left):
 
 
 def write_release(song, stage, left, url):
-    budget = 280 - 24
+    budget = post_budget()
     if ANTHROPIC_KEY:
         text = write_release_with_claude(song, stage, left, budget)
         if text:
-            return text.strip() + '\n' + url
-    line = first_sentences(song['description'], 140)
-    key = stage if line else stage + '_bare'
-    text = random.choice(RELEASE_TEMPLATES[key]).format(title=song['title'], line=line, when=when_text(left))
-    if len(text) > budget:
-        text = text[:budget - 1].rsplit(' ', 1)[0] + '…'
-    return text + '\n' + url
+            return finish(text, url)
+    pick = random.random()
+    for limit in (140, 100, 60):  # shorten the story line before cutting the post
+        line = first_sentences(song['description'], limit)
+        key = stage if line else stage + '_bare'
+        options = RELEASE_TEMPLATES[key]
+        text = options[int(pick * len(options))].format(title=song['title'], line=line, when=when_text(left))
+        if len(text) <= budget:
+            break
+    return finish(text, url)
 
 
 def write_release_with_claude(song, stage, left, budget):

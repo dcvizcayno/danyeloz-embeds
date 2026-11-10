@@ -130,6 +130,8 @@
   var READ_LESS  = 'Show less';
   var PAGE_URL   = 'https://www.danyeloz.info/released/albums-original-music-stories';
   var NO_STORY   = 'The story behind this album is on its way.';
+  var SITE_LINE  = 'Want more? Check my Official Site';   // added to shared posts; '' switches it off
+  var SITE_URL   = 'https://www.danyeloz.info/home';
   /* ============================================ */
 
   var SHEET_ID = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
@@ -191,12 +193,14 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
   function shareMenu(a) {
     var url = a.page || PAGE_URL, text = '"' + a.title + '" by Danyel OZ', E = encodeURIComponent;
+    var more_ = (SITE_LINE && url !== SITE_URL) ? '\n\n' + SITE_LINE + ' ' + SITE_URL : '';
+    var post = text + ' ' + url + more_;   // song link first, then the site
     var wrap = el('div', 'fs-share'), btn = el('button', 'al-btn', 'Share');
     btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
     var menu = el('div', 'fs-menu'); menu.hidden = true; menu.setAttribute('role', 'menu');
-    [['X', 'https://x.com/intent/post?text=' + E(text) + '&url=' + E(url)], ['Facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + E(url)],
-     ['WhatsApp', 'https://wa.me/?text=' + E(text + ' ' + url)], ['Threads', 'https://www.threads.net/intent/post?text=' + E(text + ' ' + url)],
-     ['Telegram', 'https://t.me/share/url?url=' + E(url) + '&text=' + E(text)]].forEach(function (p) {
+    [['X', 'https://x.com/intent/post?text=' + E(post)], ['Facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + E(url)],
+     ['WhatsApp', 'https://wa.me/?text=' + E(post)], ['Threads', 'https://www.threads.net/intent/post?text=' + E(post)],
+     ['Telegram', 'https://t.me/share/url?url=' + E(url) + '&text=' + E(text + more_)]].forEach(function (p) {
       var l = el('a', null, p[0]); l.href = p[1]; l.target = '_blank'; l.rel = 'noopener'; l.setAttribute('role', 'menuitem');
       l.addEventListener('click', closeMenus); menu.appendChild(l);
     });
@@ -209,7 +213,7 @@
     menu.appendChild(copy);
     if (navigator.share) {
       var more = el('button', null, 'More apps…'); more.type = 'button'; more.setAttribute('role', 'menuitem');
-      more.addEventListener('click', function () { navigator.share({ title: a.title, text: text, url: url }).catch(function () {}); closeMenus(); });
+      more.addEventListener('click', function () { navigator.share({ title: a.title, text: text + more_, url: url }).catch(function () {}); closeMenus(); });
       menu.appendChild(more);
     }
     btn.addEventListener('click', function (ev) {

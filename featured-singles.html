@@ -103,6 +103,8 @@
   var READ_LESS  = 'Show less';
   var SHOW_BUY   = true;       // "Buy on Bandcamp" button
   var PAGE_URL   = 'https://www.danyeloz.info/released/singles-original-songs-releases';  // shared when a song has no Bandcamp page
+  var SITE_LINE  = 'Want more? Check my Official Site';   // added to shared posts; '' switches it off
+  var SITE_URL   = 'https://www.danyeloz.info/home';
   /* ============================================ */
 
   var SHEET_ID = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
@@ -167,17 +169,19 @@
   function shareMenu(song) {
     var url = bandcampPage(song.bandcamp_embed) || PAGE_URL;
     var text = '"' + song.song_title + '" by Danyel OZ';
+    var more_ = (SITE_LINE && url !== SITE_URL) ? '\n\n' + SITE_LINE + ' ' + SITE_URL : '';
+    var post = text + ' ' + url + more_;   // song link first, then the site
     var wrap = el('div', 'fs-share'), btn = el('button');
     btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
     btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.8-3.4a3 3 0 0 0 0-1.6l6.8-3.4A3 3 0 1 0 15 7c0 .3 0 .5.1.8L8.3 11.2a3 3 0 1 0 0 3.6l6.8 3.4A3 3 0 1 0 18 16z"/></svg>';
     btn.appendChild(document.createTextNode('Share'));
     var menu = el('div', 'fs-menu'); menu.hidden = true; menu.setAttribute('role', 'menu');
     var e = encodeURIComponent;
-    [['X', 'https://x.com/intent/post?text=' + e(text) + '&url=' + e(url)],
+    [['X', 'https://x.com/intent/post?text=' + e(post)],
      ['Facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + e(url)],
-     ['WhatsApp', 'https://wa.me/?text=' + e(text + ' ' + url)],
-     ['Threads', 'https://www.threads.net/intent/post?text=' + e(text + ' ' + url)],
-     ['Telegram', 'https://t.me/share/url?url=' + e(url) + '&text=' + e(text)]].forEach(function (p) {
+     ['WhatsApp', 'https://wa.me/?text=' + e(post)],
+     ['Threads', 'https://www.threads.net/intent/post?text=' + e(post)],
+     ['Telegram', 'https://t.me/share/url?url=' + e(url) + '&text=' + e(text + more_)]].forEach(function (p) {
       var a = el('a', null, p[0]); a.href = p[1]; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('role', 'menuitem');
       a.addEventListener('click', closeMenus); menu.appendChild(a);
     });
@@ -196,7 +200,7 @@
     menu.appendChild(copy);
     if (navigator.share) {
       var more = el('button', null, 'More apps…'); more.type = 'button'; more.setAttribute('role', 'menuitem');
-      more.addEventListener('click', function () { navigator.share({ title: song.song_title, text: text, url: url }).catch(function () {}); closeMenus(); });
+      more.addEventListener('click', function () { navigator.share({ title: song.song_title, text: text + more_, url: url }).catch(function () {}); closeMenus(); });
       menu.appendChild(more);
     }
     btn.addEventListener('click', function (ev) {
