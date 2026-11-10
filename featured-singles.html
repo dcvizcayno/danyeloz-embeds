@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Featured Singles</title>
+</head>
+<body>
+<!-- Danyel OZ: Featured Singles (Singles page)
+     Google Sites: Insert > Embed > By URL: https://dcvizcayno.github.io/danyeloz-embeds/featured-singles.html
+     The 10 singles you pick in the admin app (Singles Page > Featured singles), in your order.
+     Song details on the left, the Bandcamp player on the right. Add ?layout=list to show all 10 stacked
+     (for a tall box), or ?n=3 to open on number 3. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; }
+  #fs { --red: #e3122a; --deep: #b0101f; --ink: #111; font-family: 'Oswald', 'Arial Narrow', sans-serif; color: var(--ink);
+    box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; padding: 4px 6px 10px; }
+  #fs * { box-sizing: border-box; }
+  #fs button { font-family: inherit; color: inherit; cursor: pointer; }
+  #fs.list { height: auto; }
+
+  /* ---- the 01 to 10 strip ---- */
+  .fs-index { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; padding: 2px 2px 10px; scrollbar-width: thin; flex: none; }
+  .fs-tab { flex: 0 0 auto; min-width: 128px; max-width: 190px; text-align: left; background: #fff; border: 1px solid #e3dede;
+    border-top: 3px solid #111; border-radius: 0; padding: 8px 12px 9px; scroll-snap-align: start; transition: background .2s, border-color .2s; }
+  .fs-tab b { display: block; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 20px; line-height: 1; color: var(--red); }
+  .fs-tab span { display: block; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fs-tab:hover { border-top-color: var(--red); }
+  #fs .fs-tab[aria-selected="true"] { background: #0a0a0a; color: #fff; border-color: #0a0a0a; border-top-color: var(--red); }
+  .fs-tab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+  /* ---- one single: details left, player right ---- */
+  .fs-stage { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 8px 4px 0; }
+  .fs-item { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .fs-info { position: relative; min-height: 0; max-height: 100%; overflow-y: auto; padding: 4px 6px 4px 2px; scrollbar-width: thin; }
+  .fs-big { font-family: 'Anton', Impact, sans-serif; font-size: 112px; line-height: .85; color: transparent; -webkit-text-stroke: 2px var(--red);
+    letter-spacing: 2px; margin: 0 0 6px; user-select: none; }
+  .fs-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .fs-tag { font-size: 11.5px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; padding: 5px 11px; background: var(--red); color: #fff; }
+  .fs-tag.ghost { background: transparent; color: var(--ink); border: 1px solid #111; padding: 4px 10px; }
+  .fs-title { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 54px; line-height: .98; letter-spacing: 1px;
+    text-transform: uppercase; margin: 0 0 16px; overflow-wrap: anywhere; }
+  .fs-lead { font-size: 21px; line-height: 1.45; font-weight: 400; color: var(--deep); margin: 0 0 16px; padding-left: 14px; border-left: 3px solid var(--red); }
+  .fs-story { font-family: 'Open Sans', Arial, sans-serif; }
+  .fs-story p { font-size: 15.5px; line-height: 1.75; color: #222; margin: 0 0 14px; }
+  .fs-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin: 6px 0 4px; }
+  .fs-more { background: none; border: 0; border-bottom: 2px solid var(--red); padding: 0 0 3px; font-size: 13px; font-weight: 500;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--deep) !important; }
+  .fs-more:hover { color: var(--red) !important; }
+  .fs-buy { font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: #fff; background: #0a0a0a;
+    text-decoration: none; padding: 9px 14px; transition: background .2s; }
+  .fs-buy:hover, .fs-buy:focus-visible { background: var(--red); outline: none; }
+
+  .fs-player { display: flex; justify-content: center; align-items: center; min-height: 0; height: 100%; }
+  .fs-player iframe { display: block; border: 0; background: #000; border-radius: 4px; box-shadow: 0 26px 60px -24px rgba(176,16,31,.55); }
+
+  .fs-nav { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex: none; }
+  .fs-arrow { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #111; background: #fff; font-size: 18px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center; transition: background .2s, color .2s, border-color .2s; }
+  .fs-arrow:hover, .fs-arrow:focus-visible { background: var(--red); border-color: var(--red); color: #fff !important; outline: none; }
+  .fs-count { font-size: 13px; letter-spacing: 3px; color: #555; }
+  .fs-count b { color: var(--red); font-weight: 600; }
+
+  /* ---- share ---- */
+  .fs-share { position: relative; }
+  .fs-share > button { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid #111; padding: 8px 13px;
+    font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; }
+  .fs-share > button:hover, .fs-share > button[aria-expanded="true"] { background: #111; color: #fff !important; }
+  .fs-share svg { width: 14px; height: 14px; fill: currentColor; }
+  .fs-menu { position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 20; min-width: 210px; background: #0a0a0a; color: #fff;
+    padding: 6px; box-shadow: 0 18px 40px rgba(0,0,0,.35); border-top: 3px solid var(--red); }
+  .fs-menu[hidden] { display: none; }
+  .fs-menu a, .fs-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; color: #fff !important; text-decoration: none;
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 12px; }
+  .fs-menu a:hover, .fs-menu button:hover, .fs-menu a:focus-visible, .fs-menu button:focus-visible { background: var(--red); outline: none; }
+  .fs-menu input { width: 100%; margin: 4px 0 2px; padding: 8px; font: 12px 'Open Sans', sans-serif; border: 0; }
+
+  .fs-msg { font-size: 16px; color: #555; padding: 30px 6px; }
+  .fs-sep { height: 2px; background: var(--red); opacity: .7; margin: 34px 0; }
+
+  @media (max-width: 760px) {
+    #fs { height: auto; min-height: 100vh; }
+    .fs-stage, .fs-item { grid-template-columns: 1fr; gap: 18px; }
+    .fs-player { order: -1; height: auto; }
+    .fs-info { max-height: none; overflow: visible; }
+    .fs-big { font-size: 72px; }
+    .fs-title { font-size: 36px; }
+    .fs-lead { font-size: 18px; }
+    .fs-tab { min-width: 108px; }
+  }
+</style>
+
+<div id="fs"><p class="fs-msg">Loading…</p></div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var LAYOUT     = 'stage';    // 'stage' = one single at a time with the 01 to 10 strip, 'list' = all of them stacked
+  var READ_MORE  = 'Read the story';
+  var READ_LESS  = 'Show less';
+  var SHOW_BUY   = true;       // "Buy on Bandcamp" button
+  var PAGE_URL   = 'https://www.danyeloz.info/released/singles-original-songs-releases';  // shared when a song has no Bandcamp page
+  /* ============================================ */
+
+  var SHEET_ID = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
+  var BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
+  var SONGS_CSV = BASE + '&gid=0';
+  var FEATURED_CSV = BASE + '&sheet=featured_singles';
+  var THEMES_CSV = BASE + '&sheet=themes';
+  var MAX = 10;
+  var TIME_ZONE = 'Asia/Singapore';
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('layout') === 'list' || q.get('layout') === 'stage') LAYOUT = q.get('layout');
+  var startAt = Math.max(1, Math.min(MAX, Number(q.get('n')) || 1)) - 1;
+
+  var root = document.getElementById('fs');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function norm(s) { return String(s || '').toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return { head: head, rows: rows.filter(function (r) { return r.some(function (v) { return v.trim(); }); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o; }) };
+  }
+  function get(url) { return fetch(url).then(function (r) { return r.ok ? r.text() : ''; }).then(parseCSV).catch(function () { return { head: [], rows: [] }; }); }
+  function today() { return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date()); }
+  function isoDate(v) { var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[0] : ''; }
+  function niceDate(iso) {
+    var p = iso.split('-').map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  /* Bandcamp: only the player address is used (the pasted HTML never runs), recolored to the site theme. */
+  function bandcamp(code) {
+    var m = String(code || '').match(/src\s*=\s*["'](https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]+)["']/i);
+    if (!m) return null;
+    var src = m[1];
+    src = /\/bgcol=/.test(src) ? src.replace(/\/bgcol=\w+/, '/bgcol=000000') : src.replace(/\/?$/, '/bgcol=000000/');
+    src = /\/linkcol=/.test(src) ? src.replace(/\/linkcol=\w+/, '/linkcol=e3122a') : src.replace(/\/?$/, '/linkcol=e3122a/');
+    var size = (src.match(/\/size=(\w+)/) || [])[1] || 'large', art = (src.match(/\/artwork=(\w+)/) || [])[1] || '';
+    var px = (String(code).match(/height\s*:\s*(\d+)px/i) || [])[1];
+    var kind = /\/minimal=true/.test(src) ? 'square' : size === 'large' && art !== 'small' && art !== 'none' ? 'art' : 'strip';
+    return { src: src, kind: kind, h: px ? Number(px) : (size === 'small' ? 42 : 120) };
+  }
+  function bandcampPage(code) {
+    var m = String(code || '').match(/href\s*=\s*["'](https:\/\/[a-z0-9-]+\.bandcamp\.com\/[^"'\s<>]+)["']/i);
+    return m ? m[1] : '';
+  }
+
+  /* ---------- share menu (shared with Explore by Theme) ---------- */
+  var openMenu = null;
+  function closeMenus() { if (openMenu) { openMenu.menu.hidden = true; openMenu.btn.setAttribute('aria-expanded', 'false'); openMenu = null; } }
+  document.addEventListener('click', function (e) { if (openMenu && !openMenu.wrap.contains(e.target)) closeMenus(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
+  function shareMenu(song) {
+    var url = bandcampPage(song.bandcamp_embed) || PAGE_URL;
+    var text = '"' + song.song_title + '" by Danyel OZ';
+    var wrap = el('div', 'fs-share'), btn = el('button');
+    btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.8-3.4a3 3 0 0 0 0-1.6l6.8-3.4A3 3 0 1 0 15 7c0 .3 0 .5.1.8L8.3 11.2a3 3 0 1 0 0 3.6l6.8 3.4A3 3 0 1 0 18 16z"/></svg>';
+    btn.appendChild(document.createTextNode('Share'));
+    var menu = el('div', 'fs-menu'); menu.hidden = true; menu.setAttribute('role', 'menu');
+    var e = encodeURIComponent;
+    [['X', 'https://x.com/intent/post?text=' + e(text) + '&url=' + e(url)],
+     ['Facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + e(url)],
+     ['WhatsApp', 'https://wa.me/?text=' + e(text + ' ' + url)],
+     ['Threads', 'https://www.threads.net/intent/post?text=' + e(text + ' ' + url)],
+     ['Telegram', 'https://t.me/share/url?url=' + e(url) + '&text=' + e(text)]].forEach(function (p) {
+      var a = el('a', null, p[0]); a.href = p[1]; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('role', 'menuitem');
+      a.addEventListener('click', closeMenus); menu.appendChild(a);
+    });
+    var copy = el('button', null, 'Copy link'); copy.type = 'button'; copy.setAttribute('role', 'menuitem');
+    copy.addEventListener('click', function () {
+      function shown() {
+        if (menu.querySelector('input')) return;
+        var inp = el('input'); inp.value = url; inp.readOnly = true; inp.setAttribute('aria-label', 'Link to copy');
+        menu.appendChild(inp); inp.focus(); inp.select();
+        copy.textContent = 'Select and copy';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy link'; }, 1600); }, shown);
+      } else shown();
+    });
+    menu.appendChild(copy);
+    if (navigator.share) {
+      var more = el('button', null, 'More apps…'); more.type = 'button'; more.setAttribute('role', 'menuitem');
+      more.addEventListener('click', function () { navigator.share({ title: song.song_title, text: text, url: url }).catch(function () {}); closeMenus(); });
+      menu.appendChild(more);
+    }
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var was = openMenu && openMenu.menu === menu; closeMenus();
+      if (!was) { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); openMenu = { menu: menu, btn: btn, wrap: wrap }; }
+    });
+    wrap.appendChild(btn); wrap.appendChild(menu);
+    return wrap;
+  }
+
+  /* ---------- one single ---------- */
+  function info(song, n) {
+    var box = el('div', 'fs-info');
+    box.appendChild(el('div', 'fs-big', String(n).padStart(2, '0')));
+    var tags = el('div', 'fs-tags');
+    [song.song_theme_1, song.song_theme_2].filter(Boolean).forEach(function (t) { tags.appendChild(el('span', 'fs-tag', t)); });
+    var iso = isoDate(song.release_date);
+    var meta = [song.release_type || 'Single', iso ? (iso > today() ? 'Out ' + niceDate(iso) : iso.slice(0, 4)) : ''].filter(Boolean).join(' · ');
+    if (meta) tags.appendChild(el('span', 'fs-tag ghost', meta));
+    box.appendChild(tags);
+    box.appendChild(el('h2', 'fs-title', song.song_title));
+    var paras = String(song.song_description || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
+    if (paras.length) box.appendChild(el('p', 'fs-lead', paras[0]));
+    var actions = el('div', 'fs-actions');
+    if (paras.length > 1) {
+      var story = el('div', 'fs-story'); story.hidden = true;
+      paras.slice(1).forEach(function (p) {
+        var para = el('p');
+        p.split('\n').forEach(function (line, k) { if (k) para.appendChild(el('br')); para.appendChild(document.createTextNode(line)); });
+        story.appendChild(para);
+      });
+      box.appendChild(story);
+      var more = el('button', 'fs-more', READ_MORE); more.type = 'button'; more.setAttribute('aria-expanded', 'false');
+      more.addEventListener('click', function () {
+        story.hidden = !story.hidden;
+        more.textContent = story.hidden ? READ_MORE : READ_LESS;
+        more.setAttribute('aria-expanded', String(!story.hidden));
+      });
+      actions.appendChild(more);
+    }
+    actions.appendChild(shareMenu(song));
+    var page = bandcampPage(song.bandcamp_embed);
+    if (SHOW_BUY && page) { var buy = el('a', 'fs-buy', 'Buy on Bandcamp'); buy.href = page; buy.target = '_blank'; buy.rel = 'noopener'; actions.appendChild(buy); }
+    box.appendChild(actions);
+    return box;
+  }
+  function player(song) {
+    var box = el('div', 'fs-player'), bc = bandcamp(song.bandcamp_embed);
+    if (!bc) return box;
+    var f = el('iframe'); f.src = bc.src; f.title = 'Play ' + song.song_title + ' on Bandcamp';
+    f.setAttribute('seamless', ''); f.setAttribute('allow', 'autoplay'); f.dataset.kind = bc.kind; f.dataset.h = bc.h;
+    box.appendChild(f);
+    return box;
+  }
+  /* Sizes each player to its column and, in the stage, to the height left in the box. */
+  function fit() {
+    root.querySelectorAll('.fs-player iframe').forEach(function (f) {
+      var col = f.parentNode, w = col.clientWidth;
+      if (!w) return;
+      if (f.dataset.kind === 'strip') { f.style.width = '100%'; f.style.height = f.dataset.h + 'px'; return; }
+      var extra = f.dataset.kind === 'art' ? 120 : 0;
+      var room = LAYOUT === 'stage' && window.innerWidth > 760 ? col.clientHeight : 9999;
+      var side = Math.max(200, Math.min(w, 560, room - extra));
+      f.style.width = side + 'px'; f.style.height = (side + extra) + 'px';
+    });
+  }
+  window.addEventListener('resize', fit);
+
+  /* ---------- layouts ---------- */
+  function renderStage(list) {
+    root.innerHTML = '';
+    var strip = el('div', 'fs-index'); strip.setAttribute('role', 'tablist'); strip.setAttribute('aria-label', 'Featured singles');
+    var stage = el('div', 'fs-stage'); stage.setAttribute('role', 'tabpanel');
+    var nav = el('div', 'fs-nav');
+    var prev = el('button', 'fs-arrow', '‹'), next = el('button', 'fs-arrow', '›'), count = el('span', 'fs-count');
+    prev.type = next.type = 'button'; prev.setAttribute('aria-label', 'Previous single'); next.setAttribute('aria-label', 'Next single');
+    nav.appendChild(prev); nav.appendChild(count); nav.appendChild(next);
+    var tabs = list.map(function (s, i) {
+      var b = el('button', 'fs-tab'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.appendChild(el('b', null, String(i + 1).padStart(2, '0'))); b.appendChild(el('span', null, s.song_title));
+      b.addEventListener('click', function () { show(i); });
+      strip.appendChild(b); return b;
+    });
+    var at = -1;
+    function show(i) {
+      i = (i + list.length) % list.length;
+      if (i === at) return; at = i; closeMenus();
+      tabs.forEach(function (b, k) { b.setAttribute('aria-selected', String(k === i)); b.tabIndex = k === i ? 0 : -1; });
+      tabs[i].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      stage.innerHTML = '';
+      stage.appendChild(info(list[i], i + 1));
+      stage.appendChild(player(list[i]));
+      count.innerHTML = ''; var b = el('b', null, String(i + 1).padStart(2, '0')); count.appendChild(b); count.appendChild(document.createTextNode(' / ' + String(list.length).padStart(2, '0')));
+      requestAnimationFrame(fit);
+    }
+    prev.addEventListener('click', function () { show(at - 1); });
+    next.addEventListener('click', function () { show(at + 1); });
+    strip.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { show(at + 1); tabs[at].focus(); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { show(at - 1); tabs[at].focus(); e.preventDefault(); }
+    });
+    root.appendChild(strip); root.appendChild(stage); if (list.length > 1) root.appendChild(nav);
+    show(Math.min(startAt, list.length - 1));
+  }
+  function renderList(list) {
+    root.innerHTML = ''; root.classList.add('list');
+    list.forEach(function (s, i) {
+      if (i) root.appendChild(el('div', 'fs-sep'));
+      var item = el('div', 'fs-item');
+      item.appendChild(info(s, i + 1)); item.appendChild(player(s));
+      root.appendChild(item);
+    });
+    requestAnimationFrame(fit);
+  }
+
+  /* ---------- data ---------- */
+  Promise.all([get(SONGS_CSV), get(FEATURED_CSV), get(THEMES_CSV)]).then(function (res) {
+    var songs = res[0].rows.filter(function (s) { return s.song_title; });
+    var withBc = songs.filter(function (s) { return bandcamp(s.bandcamp_embed); });
+    var feat = res[1].head.indexOf('position') >= 0 && res[1].head.indexOf('song_title') >= 0 ? res[1].rows : [];
+    var list = [];
+    feat.slice().sort(function (a, b) { return (Number(a.position) || 99) - (Number(b.position) || 99); }).forEach(function (f) {
+      var s = withBc.filter(function (x) { return f.song_id && String(x.song_id).trim() === String(f.song_id).trim(); })[0] ||
+              withBc.filter(function (x) { return norm(x.song_title) === norm(f.song_title); })[0];
+      if (s && list.indexOf(s) < 0 && list.length < MAX) list.push(s);
+    });
+    if (!list.length) {   // nothing picked yet: the newest released singles that fans can play
+      var now = today();
+      list = withBc.filter(function (s) { var d = isoDate(s.release_date); return (s.release_type || 'Single') === 'Single' && d && d <= now; })
+        .sort(function (a, b) { return isoDate(b.release_date).localeCompare(isoDate(a.release_date)); }).slice(0, MAX);
+    }
+    // Hidden themes stay off the page.
+    var themes = res[2].head.indexOf('theme') >= 0 ? res[2].rows : [];
+    var hidden = {};
+    themes.forEach(function (t) { if (/^(false|no|0|hide|hidden)$/i.test(t.visible || '')) hidden[norm(t.theme)] = 1; });
+    var known = {}; themes.forEach(function (t) { known[norm(t.theme)] = t.theme; });
+    list.forEach(function (s) {
+      ['song_theme_1', 'song_theme_2'].forEach(function (k) {
+        var v = norm(s[k]); s[k] = v && known[v] && !hidden[v] ? known[v] : '';
+      });
+    });
+    if (!list.length) { root.innerHTML = ''; root.appendChild(el('p', 'fs-msg', 'New singles are on the way.')); return; }
+    if (LAYOUT === 'list') renderList(list); else renderStage(list);
+  });
+})();
+</script>
+</body>
+</html>
