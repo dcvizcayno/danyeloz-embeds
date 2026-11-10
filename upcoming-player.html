@@ -11,35 +11,50 @@
      Paste into Google Sites: Insert > Embed > Embed code.
      Shows the next song in your Song Database whose release date is still ahead (Singapore time).
      The day it comes out, it moves on to the next one by itself. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: transparent; }
-  #ozu { font-family: 'Open Sans', Arial, sans-serif; color: #fff; background: #754408; border-radius: 16px;
-    padding: 20px; width: 100%; box-sizing: border-box; }
+  #ozu { position: relative; overflow: hidden; isolation: isolate; font-family: 'Oswald', 'Arial Narrow', sans-serif; color: #fff;
+    background: #140405; border-radius: 6px; padding: 24px 22px 22px; width: 100%; box-sizing: border-box; }
   #ozu * { box-sizing: border-box; }
-  .ozu-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #f6d9a8; margin: 0 0 4px; }
-  .ozu-title { font-size: 26px; font-weight: 700; margin: 0 0 4px; line-height: 1.2; }
-  .ozu-date { font-size: 14px; color: #f3e6d3; margin: 0 0 14px; }
-  .ozu-soon { background: #ffd166; color: #4a2a00; font-size: 11px; font-weight: 700; padding: 3px 8px;
-    border-radius: 999px; margin-left: 8px; vertical-align: middle; white-space: nowrap; }
-  #ozu-player iframe, #ozu-player img { display: block; margin: 0 auto; border: 0; border-radius: 12px; }
-  #ozu-player iframe { background: #fff; }
-  #ozu-player img { object-fit: cover; background: rgba(0,0,0,.2); }
-  .ozu-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .ozu-links a { flex: 1 1 120px; text-align: center; text-decoration: none; color: #4a2a00; background: #fff;
-    font-weight: 700; font-size: 14px; padding: 10px 12px; border-radius: 999px; }
-  .ozu-links a:hover { background: #f6d9a8; }
-  .ozu-msg { font-size: 15px; color: #f3e6d3; margin: 0; }
+  /* the cover art, blurred and washed in red, sits behind everything */
+  #ozu-bg { position: absolute; inset: -40px; z-index: -2; background: #140405 center / cover no-repeat;
+    filter: blur(26px) saturate(.5) brightness(.9); transform: scale(1.1); }
+  #ozu::before { content: ''; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(176,16,31,.55) 0%, rgba(110,8,18,.78) 45%, rgba(20,4,5,.96) 100%); }
+  .ozu-label { font-family: 'Great Vibes', cursive; font-size: 34px; line-height: 1; color: #ffd2d6; margin: 0 0 2px; }
+  .ozu-title { font-family: 'Anton', Impact, sans-serif; font-size: 46px; line-height: .98; letter-spacing: 1px;
+    text-transform: uppercase; margin: 0 0 12px; text-shadow: 0 2px 18px rgba(0,0,0,.35); overflow-wrap: anywhere; }
+  .ozu-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+  .ozu-tags:empty { display: none; }
+  .ozu-date, .ozu-soon { display: inline-block; font-size: 12px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 6px 12px; margin: 0; }
+  .ozu-date { background: #e3122a; color: #fff; }
+  .ozu-date:empty { display: none; }
+  .ozu-soon { background: #fff; color: #b0101f; }
+  #ozu-player iframe, #ozu-player img { display: block; margin: 0 auto; border: 0; border-radius: 4px;
+    box-shadow: 0 22px 50px -18px rgba(0,0,0,.7); }
+  #ozu-player iframe { background: #000; }
+  #ozu-player img { object-fit: cover; background: rgba(0,0,0,.3); }
+  .ozu-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .ozu-links a { flex: 1 1 120px; text-align: center; text-decoration: none; color: #fff; background: transparent;
+    border: 1px solid rgba(255,255,255,.55); border-radius: 2px; font: 500 13px 'Oswald', 'Arial Narrow', sans-serif;
+    letter-spacing: 2.5px; text-transform: uppercase; padding: 11px 10px; transition: background .2s, border-color .2s; }
+  .ozu-links a:hover, .ozu-links a:focus-visible { background: #e3122a; border-color: #e3122a; outline: none; }
+  .ozu-msg { font-size: 15px; color: #ffd2d6; margin: 0; }
   @media (max-width: 480px) {
-    #ozu { padding: 14px; border-radius: 12px; }
-    .ozu-title { font-size: 22px; }
-    .ozu-links a { flex-basis: 45%; padding: 8px 10px; font-size: 13px; }
+    #ozu { padding: 16px 14px; }
+    .ozu-label { font-size: 28px; }
+    .ozu-title { font-size: 34px; }
+    .ozu-links a { flex-basis: 45%; padding: 9px 8px; font-size: 12px; letter-spacing: 1.8px; }
   }
 </style>
 
 <div id="ozu">
+  <div id="ozu-bg" aria-hidden="true"></div>
   <p class="ozu-label" id="ozu-label"></p>
   <p class="ozu-title" id="ozu-title">Loading…</p>
-  <p class="ozu-date" id="ozu-date"></p>
+  <div class="ozu-tags" id="ozu-tags"><p class="ozu-date" id="ozu-date"></p></div>
   <div id="ozu-player"></div>
   <div class="ozu-links" id="ozu-links"></div>
 </div>
@@ -48,7 +63,7 @@
 (function () {
   /* ================= Settings ================= */
   var SONG        = 'next';          // 'next' = nearest upcoming release, or a song title / Apple ID from your sheet
-  var LABEL       = 'Upcoming';      // text above the title ('' to hide)
+  var LABEL       = 'Coming soon';   // handwritten line above the title ('' to hide)
   var DATE_PREFIX = 'Out ';          // text before the date
   var SOON_DAYS   = 7;               // show a "THIS WEEK" style badge within this many days (0 = never)
   var SHOW_LINKS  = true;            // platform buttons
@@ -112,6 +127,14 @@
   }
 
   /* Reads Bandcamp's embed code and keeps only its player address (the pasted HTML never runs). */
+
+  /* Bandcamp's own colors follow the site theme: black player, red links */
+  function themed(src) {
+    src = /\/bgcol=/.test(src) ? src.replace(/\/bgcol=\w+/, '/bgcol=000000') : src.replace(/\/?$/, '/bgcol=000000/');
+    src = /\/linkcol=/.test(src) ? src.replace(/\/linkcol=\w+/, '/linkcol=e3122a') : src.replace(/\/?$/, '/linkcol=e3122a/');
+    return src;
+  }
+
   function bandcamp(code) {
     var m = String(code || '').match(/src\s*=\s*["'](https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]+)["']/i);
     if (!m) return null;
@@ -121,7 +144,7 @@
     var px = (String(code).match(/height\s*:\s*(\d+)px/i) || [])[1];
     var kind = /\/minimal=true/.test(src) ? 'square'
              : size === 'large' && art !== 'small' && art !== 'none' ? 'art' : 'strip';
-    return { src: src, kind: kind, height: px ? Number(px) : (kind === 'strip' ? (size === 'small' ? 42 : 120) : 0) };
+    return { src: themed(src), kind: kind, height: px ? Number(px) : (kind === 'strip' ? (size === 'small' ? 42 : 120) : 0) };
   }
 
   function addLinks(row) {
@@ -146,6 +169,7 @@
         return;
       }
       $('ozu-title').textContent = s.song_title;
+      if (s.song_arts && isImage(s.song_arts)) $('ozu-bg').style.backgroundImage = 'url("' + imageUrl(s.song_arts).replace(/["\\]/g, '') + '")';
       var iso = isoDate(s.release_date);
       if (iso) {
         var d = daysUntil(iso);
@@ -153,7 +177,7 @@
         if (SOON_DAYS > 0 && d >= 0 && d <= SOON_DAYS) {
           var b = document.createElement('span'); b.className = 'ozu-soon';
           b.textContent = d === 0 ? 'TODAY' : d === 1 ? 'TOMORROW' : 'IN ' + d + ' DAYS';
-          $('ozu-title').appendChild(b);
+          $('ozu-tags').appendChild(b);
         }
       }
 

@@ -10,34 +10,44 @@
 <!-- Danyel OZ: Player card (embed 1 of 2)
      Paste into Google Sites: Insert > Embed > Embed code.
      Reusable: change SONG below to show the latest release or any song from your Song Database. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: transparent; }
-  #ozp { font-family: 'Open Sans', Arial, sans-serif; color: #fff; background: #2a1650; border-radius: 16px;
-    padding: 20px; width: 100%; box-sizing: border-box; }
+  #ozp { position: relative; overflow: hidden; font-family: 'Oswald', 'Arial Narrow', sans-serif; color: #fff; border-radius: 6px;
+    padding: 24px 22px 22px; width: 100%; box-sizing: border-box; border: 1px solid #2a0b0f;
+    background: radial-gradient(90% 55% at 0% 0%, rgba(176,16,31,.42), transparent 70%),
+                radial-gradient(60% 40% at 100% 100%, rgba(176,16,31,.18), transparent 70%), #050505; }
   #ozp * { box-sizing: border-box; }
-  .ozp-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #c9b6ff; margin: 0 0 4px; }
-  .ozp-title { font-size: 26px; font-weight: 700; margin: 0 0 4px; line-height: 1.2; }
-  .ozp-date { font-size: 14px; color: #ddd; margin: 0 0 14px; }
-  .ozp-new { background: #ff5a5f; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px;
-    border-radius: 999px; margin-left: 8px; vertical-align: middle; }
-  #ozp iframe { display: block; width: 100%; height: 450px; border: 0; border-radius: 12px; background: transparent; }
-  #ozp iframe.ozp-bc { margin: 0 auto; background: #fff; }
-  .ozp-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .ozp-links a { flex: 1 1 120px; text-align: center; text-decoration: none; color: #2a1650; background: #fff;
-    font-weight: 700; font-size: 14px; padding: 10px 12px; border-radius: 999px; }
-  .ozp-links a:hover { background: #c9b6ff; }
+  .ozp-label { font-family: 'Great Vibes', cursive; font-size: 34px; line-height: 1; color: #e3122a; margin: 0 0 2px;
+    text-transform: none; letter-spacing: 0; }
+  .ozp-title { font-family: 'Anton', Impact, sans-serif; font-size: 46px; line-height: .98; letter-spacing: 1px;
+    text-transform: uppercase; margin: 0 0 12px; overflow-wrap: anywhere; }
+  .ozp-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+  .ozp-date, .ozp-new { display: inline-block; font-size: 12px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 5px 12px; margin: 0; }
+  .ozp-date { border: 1px solid #e3122a; color: #fff; }
+  .ozp-date:empty { display: none; }
+  .ozp-new { background: #e3122a; color: #fff; border: 1px solid #e3122a; }
+  #ozp iframe { display: block; width: 100%; height: 450px; border: 0; border-radius: 4px; background: #000; }
+  #ozp iframe.ozp-bc { margin: 0 auto; box-shadow: 0 22px 50px -18px rgba(176,16,31,.45); }
+  .ozp-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .ozp-links a { flex: 1 1 120px; text-align: center; text-decoration: none; color: #fff; background: transparent;
+    border: 1px solid rgba(255,255,255,.55); border-radius: 2px; font: 500 13px 'Oswald', 'Arial Narrow', sans-serif;
+    letter-spacing: 2.5px; text-transform: uppercase; padding: 11px 10px; transition: background .2s, border-color .2s; }
+  .ozp-links a:hover, .ozp-links a:focus-visible { background: #e3122a; border-color: #e3122a; outline: none; }
   .ozp-msg { font-size: 14px; color: #ddd; }
   @media (max-width: 480px) {
-    #ozp { padding: 14px; border-radius: 12px; }
-    .ozp-title { font-size: 22px; }
-    .ozp-links a { flex-basis: 45%; padding: 8px 10px; font-size: 13px; }
+    #ozp { padding: 16px 14px; }
+    .ozp-label { font-size: 28px; }
+    .ozp-title { font-size: 34px; }
+    .ozp-links a { flex-basis: 45%; padding: 9px 8px; font-size: 12px; letter-spacing: 1.8px; }
   }
 </style>
 
 <div id="ozp">
   <p class="ozp-label" id="ozp-label"></p>
   <p class="ozp-title" id="ozp-title">Loading…</p>
-  <p class="ozp-date" id="ozp-date"></p>
+  <div class="ozp-tags" id="ozp-tags"><p class="ozp-date" id="ozp-date"></p></div>
   <div id="ozp-player"></div>
   <div class="ozp-links" id="ozp-links"></div>
 </div>
@@ -61,7 +71,7 @@
   var ARTIST_LINKS = {
     spotify_link:    { name: 'Spotify',       url: 'https://open.spotify.com/artist/2rXzK2nhFFclSWxkpJ9XYn', ok: /^https:\/\/(open\.spotify\.com|spotify\.link)\//i },
     appl_music_link: { name: 'Apple Music',   url: 'https://music.apple.com/us/artist/danyel-oz/1706653995',  ok: /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i },
-    yt_video_link:   { name: 'YouTube Music', url: 'https://music.youtube.com/channel/UCmvCshUQAXm1aoWRAnOSTaA', ok: /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i },
+    yt_video_link:   { name: 'YouTube', url: 'https://music.youtube.com/channel/UCmvCshUQAXm1aoWRAnOSTaA', ok: /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i },
     amazon_link:     { name: 'Amazon Music',  url: 'https://music.amazon.com/artists/B0CHPJX6SM',              ok: /^https:\/\/(music\.)?amazon\.[a-z.]+\/|^https:\/\/amzn\.to\//i }
   };
 
@@ -130,7 +140,7 @@
     $('ozp-title').textContent = s.title;
     var age = s.date ? (dayOf(todaySG()).getTime() - s.date.getTime()) / 86400000 : null;
     if (age != null && NEW_DAYS > 0 && age >= 0 && age <= NEW_DAYS) {
-      var b = document.createElement('span'); b.className = 'ozp-new'; b.textContent = 'NEW'; $('ozp-title').appendChild(b);
+      var b = document.createElement('span'); b.className = 'ozp-new'; b.textContent = 'NEW'; $('ozp-tags').appendChild(b);
     }
     $('ozp-date').textContent = !s.date ? '' : (age < 0 ? 'Out ' : 'Released ') + fmtDate(s.date);
 
@@ -175,6 +185,14 @@
   });
 
   /* Reads Bandcamp's embed code and keeps only its player address (never runs the pasted HTML). */
+
+  /* Bandcamp's own colors follow the site theme: black player, red links */
+  function themed(src) {
+    src = /\/bgcol=/.test(src) ? src.replace(/\/bgcol=\w+/, '/bgcol=000000') : src.replace(/\/?$/, '/bgcol=000000/');
+    src = /\/linkcol=/.test(src) ? src.replace(/\/linkcol=\w+/, '/linkcol=e3122a') : src.replace(/\/?$/, '/linkcol=e3122a/');
+    return src;
+  }
+
   function bandcamp(code) {
     var m = String(code || '').match(/src\s*=\s*["'](https:\/\/bandcamp\.com\/EmbeddedPlayer\/[\w=\/.-]+)["']/i);
     if (!m) return null;
@@ -186,7 +204,7 @@
     // 'strip' = fixed-height bar (small / slim / small artwork)
     var kind = /\/minimal=true/.test(src) ? 'square'
              : size === 'large' && art !== 'small' && art !== 'none' ? 'art' : 'strip';
-    return { src: src, kind: kind, height: px ? Number(px) : (kind === 'strip' ? (size === 'small' ? 42 : 120) : 0) };
+    return { src: themed(src), kind: kind, height: px ? Number(px) : (kind === 'strip' ? (size === 'small' ? 42 : 120) : 0) };
   }
 
   /* Sizes the player to the embed box, so it still fits when Google Sites shrinks the box on phones. */

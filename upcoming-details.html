@@ -10,24 +10,31 @@
 <!-- Danyel OZ: Upcoming Release, song details (embed 2 of 2)
      Paste into Google Sites: Insert > Embed > Embed code.
      Shows the same upcoming song as the Upcoming player card, from your Song Database. -->
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: transparent; }
-  #ozd { padding: 0 4px; color: #333; font-family: 'Open Sans', Arial, sans-serif; }
-  .ozd-title { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-size: 40px; line-height: 1.15; font-weight: 500;
-    text-transform: uppercase; color: #1a1ad6; margin: 0 0 34px; }
-  .ozd-lead { font-size: 15px; line-height: 1.75; margin: 0 0 16px; color: #333; }
-  .ozd-story p { font-size: 15px; line-height: 1.75; margin: 0 0 14px; color: #333; }
-  .ozd-more { background: none; border: 0; padding: 0; margin: 0 0 40px; font: 400 15px 'Open Sans', Arial, sans-serif;
-    color: #1a1ad6; cursor: pointer; }
-  .ozd-more:hover { text-decoration: underline; }
-  .ozd-meta { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-size: 15px; color: #1a1ad6; margin: 0 0 14px; }
+  #ozd { padding: 0 4px; color: #111; font-family: 'Open Sans', Arial, sans-serif; }
+  .ozd-kicker { display: inline-block; font: 500 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 3px; text-transform: uppercase;
+    color: #fff; background: #e3122a; padding: 5px 11px; margin: 4px 0 14px; }
+  .ozd-title { font-family: 'Anton', Impact, sans-serif; font-size: 54px; line-height: .98; letter-spacing: 1px; font-weight: 400;
+    text-transform: uppercase; color: #111; margin: 0 0 18px; overflow-wrap: anywhere; }
+  .ozd-lead { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 400; font-size: 21px; line-height: 1.45;
+    color: #b0101f; margin: 0 0 18px; padding-left: 14px; border-left: 3px solid #e3122a; }
+  .ozd-story p { font-size: 15.5px; line-height: 1.75; margin: 0 0 14px; color: #222; }
+  .ozd-more { display: inline-block; background: none; border: 0; border-bottom: 2px solid #e3122a; padding: 0 0 3px; margin: 0 0 30px;
+    cursor: pointer; font: 500 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozd-more:hover, .ozd-more:focus-visible { color: #e3122a; outline: none; }
+  .ozd-metas { max-width: 440px; border-top: 2px solid #111; }
+  .ozd-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin: 0; padding: 10px 0;
+    border-bottom: 1px solid #e6e2e2; }
+  .ozd-meta .k { font: 500 11.5px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozd-meta .v { font: 400 17px 'Oswald', 'Arial Narrow', sans-serif; color: #111; text-align: right; }
   .ozd-muted { font-size: 15px; color: #555; }
   @media (max-width: 480px) {
-    .ozd-title { font-size: 28px; margin-bottom: 18px; }
-    .ozd-lead, .ozd-story p, .ozd-more { font-size: 14px; }
-    .ozd-more { margin-bottom: 24px; }
-    .ozd-meta { font-size: 14px; margin-bottom: 10px; }
+    .ozd-title { font-size: 36px; }
+    .ozd-lead { font-size: 18px; }
+    .ozd-story p { font-size: 14.5px; }
+    .ozd-meta .v { font-size: 15px; }
   }
 </style>
 
@@ -38,8 +45,9 @@
   /* ================= Settings ================= */
   var SONG         = 'next';          // 'next' = nearest upcoming release (same as the player card), or a song title
   var TITLE_PREFIX = '';              // text before the title
+  var KICKER       = 'Coming soon';   // small red tag above the title ('' to hide)
   var DATE_LABEL   = 'To Be Released';
-  var READ_MORE    = 'Read more…';
+  var READ_MORE    = 'Read the story';
   var READ_LESS    = 'Show less';
   var SHOW = { title: true, lead: true, story: true, date: true, type: true, genre: true, label: false, isrc: true, upc: true };
   var NOTHING_TEXT = 'New music is on the way. Stay tuned.';
@@ -88,10 +96,18 @@
     text.split('\n').forEach(function (line, k) { if (k) p.appendChild(document.createElement('br')); p.appendChild(document.createTextNode(line)); });
     return p;
   }
-  function meta(label, value) { if (value) root.appendChild(el('p', 'ozd-meta', label + ': ' + value)); }
+  var metaBox = null;
+  function meta(label, value) {
+    if (!value) return;
+    if (!metaBox || !metaBox.parentNode) { metaBox = el('div', 'ozd-metas'); root.appendChild(metaBox); }
+    var row = el('p', 'ozd-meta');
+    row.appendChild(el('span', 'k', label)); row.appendChild(el('span', 'v', value));
+    metaBox.appendChild(row);
+  }
 
   function render(s) {
     root.innerHTML = '';
+    if (KICKER) root.appendChild(el('p', 'ozd-kicker', KICKER));
     if (SHOW.title) root.appendChild(el('h2', 'ozd-title', TITLE_PREFIX + s.song_title));
 
     var paras = String(s.song_description || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
@@ -108,8 +124,6 @@
       });
       root.appendChild(story);
       root.appendChild(btn);
-    } else if (SHOW.lead) {
-      root.lastChild.style.marginBottom = '40px';
     }
 
     var iso = isoDate(s.release_date);

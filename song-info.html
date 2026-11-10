@@ -11,30 +11,38 @@
      Paste into Google Sites: Insert > Embed > Embed code.
      Reusable: change SONG below to show the latest release or any song from your Song Database,
      and turn each part on or off in SHOW. -->
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: transparent; }
-  #ozi { color: #111; padding: 0 4px; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 400; }
-  .ozi-art { display: block; width: 180px; max-width: 45%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; margin: 0 0 16px; }
-  .ozi-title { font-size: 46px; line-height: 1.1; margin: 0 0 14px; font-weight: 500; text-transform: uppercase; color: #2552c9; }
-  .ozi-lead { font-size: 18px; line-height: 1.6; color: #2a2fa8; font-weight: 500; margin: 0 0 22px; }
-  .ozi-story p { font-size: 16.5px; line-height: 1.7; margin: 0 0 16px; color: #111; letter-spacing: 0.2px; }
-  .ozi-meta { font-size: 16px; margin: 0 0 10px; color: #111; }
-  .ozi-more { display: block; background: none; border: 0; padding: 0; margin: -8px 0 28px; cursor: pointer;
-    font: 400 16px 'Oswald', 'Arial Narrow', sans-serif; color: #2552c9; }
-  .ozi-more:hover { text-decoration: underline; }
-  .ozi-story:not([hidden]) + .ozi-more { margin-top: 0; }
-  .ozi-qr { margin-top: 18px; display: flex; align-items: center; gap: 14px; }
-  .ozi-qr-box { background: #fff; padding: 8px; border-radius: 10px; border: 1px solid #e3dcf5; line-height: 0; }
-  .ozi-qr-box img, .ozi-qr-box canvas { width: 130px !important; height: 130px !important; }
-  .ozi-qr-text { font-size: 14px; color: #333; max-width: 200px; }
-  .ozi-muted { font-size: 15px; color: #444; }
+  #ozi { padding: 0 4px; color: #111; font-family: 'Open Sans', Arial, sans-serif; }
+  .ozi-kicker { display: inline-block; font: 500 12px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 3px; text-transform: uppercase;
+    color: #fff; background: #e3122a; padding: 5px 11px; margin: 4px 0 14px; }
+  .ozi-title { font-family: 'Anton', Impact, sans-serif; font-size: 54px; line-height: .98; letter-spacing: 1px; font-weight: 400;
+    text-transform: uppercase; color: #111; margin: 0 0 18px; overflow-wrap: anywhere; }
+  .ozi-lead { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 400; font-size: 21px; line-height: 1.45;
+    color: #b0101f; margin: 0 0 18px; padding-left: 14px; border-left: 3px solid #e3122a; }
+  .ozi-story p { font-size: 15.5px; line-height: 1.75; margin: 0 0 14px; color: #222; }
+  .ozi-more { display: inline-block; background: none; border: 0; border-bottom: 2px solid #e3122a; padding: 0 0 3px; margin: 0 0 30px;
+    cursor: pointer; font: 500 13px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozi-more:hover, .ozi-more:focus-visible { color: #e3122a; outline: none; }
+  .ozi-metas { max-width: 440px; border-top: 2px solid #111; }
+  .ozi-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin: 0; padding: 10px 0;
+    border-bottom: 1px solid #e6e2e2; }
+  .ozi-meta .k { font: 500 11.5px 'Oswald', 'Arial Narrow', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: #b0101f; }
+  .ozi-meta .v { font: 400 17px 'Oswald', 'Arial Narrow', sans-serif; color: #111; text-align: right; }
+  .ozi-muted { font-size: 15px; color: #555; }
   @media (max-width: 480px) {
-    .ozi-title { font-size: 30px; }
-    .ozi-lead { font-size: 16px; }
-    .ozi-story p, .ozi-meta { font-size: 15px; }
-    .ozi-qr-box img, .ozi-qr-box canvas { width: 100px !important; height: 100px !important; }
+    .ozi-title { font-size: 36px; }
+    .ozi-lead { font-size: 18px; }
+    .ozi-story p { font-size: 14.5px; }
+    .ozi-meta .v { font-size: 15px; }
   }
+  .ozi-art { display: block; width: 180px; max-width: 45%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; margin: 0 0 16px; }
+  .ozi-qr { margin-top: 18px; display: flex; align-items: center; gap: 14px; }
+  .ozi-qr-box { background: #fff; padding: 8px; border: 1px solid #e6e2e2; line-height: 0; }
+  .ozi-qr-box img, .ozi-qr-box canvas { width: 130px !important; height: 130px !important; }
+  .ozi-qr-text { font: 400 14px 'Oswald', sans-serif; letter-spacing: 1px; color: #333; max-width: 200px; }
+  .ozi-story:not([hidden]) + .ozi-more { margin-top: 0; }
 </style>
 
 <div id="ozi"><p class="ozi-muted">Loading…</p></div>
@@ -46,6 +54,7 @@
   var SONG         = 'latest';   // 'latest' = newest release date in your Song Database (switches at midnight Manila),
                                  // or a song title / Apple Music ID from your sheet, e.g. 'Carmen'
   var TITLE_PREFIX = '';         // text before the song title, e.g. 'Title: ' ('' = just the title)
+  var KICKER       = 'Out now';   // small red tag above the title ('' to hide)
   var SHOW = {
     art:   false,   // cover image (song_arts)
     title: true,
@@ -61,7 +70,7 @@
   };
   var EMPTY_TEXT = 'The story behind this song is coming soon.';
   var COLLAPSE   = true;          // true = show the first paragraph, with "Read more…" for the rest
-  var READ_MORE  = 'Read more…';
+  var READ_MORE    = 'Read the story';
   var READ_LESS  = 'Show less';
   /* ============================================ */
 
@@ -122,7 +131,14 @@
              appleUrl: r2.appl_music_link, art: r2.song_arts, row: r2 };
   }
 
-  function meta(label, value) { if (value) root.appendChild(el('p', 'ozi-meta', label + ': ' + value)); }
+  var metaBox = null;
+  function meta(label, value) {
+    if (!value) return;
+    if (!metaBox || !metaBox.parentNode) { metaBox = el('div', 'ozi-metas'); root.appendChild(metaBox); }
+    var row = el('p', 'ozi-meta');
+    row.appendChild(el('span', 'k', label)); row.appendChild(el('span', 'v', value));
+    metaBox.appendChild(row);
+  }
 
   function render(s) {
     root.innerHTML = '';
@@ -132,6 +148,7 @@
       img.onerror = function () { img.remove(); };
       root.appendChild(img);
     }
+    if (KICKER) root.appendChild(el('p', 'ozi-kicker', KICKER));
     if (SHOW.title) root.appendChild(el('h2', 'ozi-title', TITLE_PREFIX + s.title));
 
     var paras = String(row.song_description || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
