@@ -178,10 +178,14 @@
   var BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
   var SONGS_CSV = BASE + '&gid=0', SEASONAL_CSV = BASE + '&sheet=seasonal';
   var TIME_ZONE = 'Asia/Singapore';
-  var LINKS = [['appl_music_link', 'Apple Music', /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i],
-               ['spotify_link', 'Spotify', /^https:\/\/open\.spotify\.com\//i],
-               ['yt_video_link', 'YouTube', /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i],
-               ['amazon_link', 'Amazon Music', /^https:\/\/(music\.)?amazon\.[a-z.]+\//i]];
+  // Every platform always shows. The sheet's own link wins; without one, the button opens that
+  // platform's search for "Danyel OZ <title>", so fans still land on the right release.
+  var LINKS = [['appl_music_link', 'Apple Music', /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i, 'https://music.apple.com/us/search?term='],
+               ['spotify_link', 'Spotify', /^https:\/\/open\.spotify\.com\//i, 'https://open.spotify.com/search/'],
+               ['', 'YouTube Music', null, 'https://music.youtube.com/search?q='],
+               ['amazon_link', 'Amazon Music', /^https:\/\/(music\.)?amazon\.[a-z.]+\//i, 'https://music.amazon.com/search/'],
+               ['', 'Deezer', null, 'https://www.deezer.com/search/'],
+               ['yt_video_link', 'Watch on YouTube', /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i, '']];   // video: only when there is one
 
   var q = new URLSearchParams(location.search);
   var root = document.getElementById('hm');
@@ -406,9 +410,11 @@
     if (page) { var buy = el('a', 'hm-buy', iso > now ? 'Pre-order' : 'Buy on Bandcamp'); buy.href = page; buy.target = '_blank'; buy.rel = 'noopener'; actions.appendChild(buy); }
     box.appendChild(actions);
     var links = el('div', 'hm-links');
+    var term = encodeURIComponent('Danyel OZ ' + s.song_title);
     LINKS.forEach(function (L) {
-      var u = String(s[L[0]] || '').trim();
-      if (L[2].test(u)) { var a = el('a', null, L[1]); a.href = u; a.target = '_blank'; a.rel = 'noopener'; links.appendChild(a); }
+      var u = L[0] ? String(s[L[0]] || '').trim() : '';
+      if (!(L[2] && L[2].test(u))) u = L[3] ? L[3] + term : '';
+      if (u) { var a = el('a', null, L[1]); a.href = u; a.target = '_blank'; a.rel = 'noopener'; links.appendChild(a); }
     });
     if (links.children.length) box.appendChild(links);
     return box;
