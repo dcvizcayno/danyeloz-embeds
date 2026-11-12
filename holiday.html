@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Holiday Music</title>
+</head>
+<body>
+<!-- Danyel OZ: Holiday Music (Released > Holiday Music)
+     Google Sites: Insert > Embed > By URL: https://dcvizcayno.github.io/danyeloz-embeds/holiday.html
+     The page dresses itself for the season, by the date in Manila:
+       Christmas (Nov 1 to Dec 25): snow, red and gold, countdown to Christmas Day
+       New Year (Dec 26 to Jan 6): gold sparkles, the Christmas songs stay on
+       Valentine's (Jan 25 to Feb 15): blush and red, floating hearts, love songs
+       The rest of the year: the site's red and black, both collections, and how long until the next season
+     Which songs: Christmas = genre "Holiday" or "Christmas", or a Christmas word in the title.
+                  Valentine's = genre with "love" or "romantic", or a love word in the title.
+     To choose the songs yourself, add a sheet tab named "seasonal" with the columns
+       season (christmas or valentine), position, song_title (song_id optional)
+     and those songs replace the automatic list for that season, in your order. The first one is the spotlight.
+     Preview any season: ?season=christmas | newyear | valentine | off   (or ?date=2026-12-24) -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0a0a0a; }
+  #hm { --bg: #0a0a0a; --bg2: #2a0509; --ink: #fff; --soft: rgba(255,255,255,.78); --accent: #e3122a; --gold: #e8c46a;
+    --card: rgba(255,255,255,.06); --line: rgba(255,255,255,.16); --btn-ink: #fff;
+    position: relative; overflow: hidden; min-height: 100vh; box-sizing: border-box; padding: 0 0 34px;
+    font-family: 'Oswald', 'Arial Narrow', sans-serif; color: var(--ink);
+    background: radial-gradient(120% 70% at 50% 0%, var(--bg2) 0%, var(--bg) 62%); transition: background .6s; }
+  #hm * { box-sizing: border-box; }
+  #hm button { font-family: inherit; cursor: pointer; }
+
+  /* ---- season palettes ---- */
+  #hm.s-christmas { --bg: #07120e; --bg2: #5c0a14; --accent: #e3122a; --gold: #e8c46a; }
+  #hm.s-newyear   { --bg: #050505; --bg2: #2b2410; --accent: #e8c46a; --gold: #f6dc8f; }
+  #hm.s-valentine { --bg: #fff1f3; --bg2: #ffd0d9; --ink: #2a0509; --soft: #5b2530; --accent: #d90f2b; --gold: #ff6b88;
+    --card: rgba(255,255,255,.72); --line: rgba(176,16,31,.22); --btn-ink: #2a0509; }
+  #hm.s-off       { --bg: #ffffff; --bg2: #ffe3e6; --ink: #111; --soft: #444; --accent: #e3122a; --gold: #b0101f;
+    --card: #fff; --line: #e8dede; --btn-ink: #111; }
+
+  /* ---- falling decorations ---- */
+  #hm.s-newyear .hm-buy, #hm.s-newyear .hm-tag:not(.ghost) { color: #111; }
+
+  .hm-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .hm-sky span { position: absolute; top: -40px; display: block; will-change: transform; animation: hm-fall linear infinite; opacity: .85; }
+  .hm-sky .snow { width: 6px; height: 6px; border-radius: 50%; background: #fff; filter: blur(.4px); }
+  .hm-sky .heart { width: 14px; height: 14px; animation-name: hm-rise; top: auto; bottom: -30px; }
+  .hm-sky .heart::before { content: '\2665'; position: absolute; inset: 0; font-size: 18px; line-height: 1; color: var(--accent); }
+  .hm-sky .spark { width: 4px; height: 10px; border-radius: 2px; background: var(--gold); }
+  @keyframes hm-fall { from { transform: translate3d(0, 0, 0) rotate(0); } to { transform: translate3d(var(--drift, 30px), 110vh, 0) rotate(300deg); } }
+  @keyframes hm-rise { from { transform: translate3d(0, 0, 0) scale(.8); opacity: 0; } 15% { opacity: .75; } to { transform: translate3d(var(--drift, 30px), -110vh, 0) scale(1.15); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hm-sky { display: none; } }
+
+  .hm-wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+  /* ---- heading ---- */
+  .hm-head { text-align: center; padding: 34px 0 20px; }
+  .hm-script { font-family: 'Great Vibes', cursive; font-size: 54px; line-height: 1; color: var(--gold); margin: 0; }
+  .hm-title { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 64px; line-height: 1; letter-spacing: 3px;
+    text-transform: uppercase; margin: 2px 0 8px; }
+  .hm-sub { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); margin: 0 0 16px; }
+  .hm-chip { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border: 1px solid var(--accent);
+    font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; }
+  .hm-chip b { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 22px; letter-spacing: 1px; color: var(--accent); }
+
+  /* ---- spotlight ---- */
+  .hm-spot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start;
+    background: var(--card); border: 1px solid var(--line); padding: 26px; backdrop-filter: blur(4px); }
+  .hm-cover { position: relative; width: 132px; flex: none; aspect-ratio: 1; background: #222 center/cover no-repeat;
+    box-shadow: 0 18px 40px -16px var(--accent); }
+  .hm-top { display: flex; gap: 18px; align-items: flex-end; margin-bottom: 16px; }
+  .hm-tag { display: inline-block; font-size: 11.5px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 5px 10px; background: var(--accent); color: #fff; margin: 0 6px 8px 0; }
+  .hm-tag.ghost { background: none; color: var(--ink); border: 1px solid var(--line); }
+  .hm-name { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 40px; line-height: 1; text-transform: uppercase;
+    letter-spacing: 1px; margin: 0; overflow-wrap: anywhere; }
+  .hm-lead { font-size: 19px; line-height: 1.45; color: var(--soft); margin: 0 0 14px; padding-left: 14px; border-left: 3px solid var(--accent); }
+  .hm-story { font-family: 'Open Sans', Arial, sans-serif; }
+  .hm-story p { font-size: 15px; line-height: 1.75; color: var(--soft); margin: 0 0 12px; }
+  .hm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 8px 0 14px; }
+  .hm-more { background: none; border: 0; border-bottom: 2px solid var(--accent); padding: 0 0 3px; font-size: 13px; font-weight: 500;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--ink); }
+  .hm-buy { font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: #fff; background: var(--accent);
+    text-decoration: none; padding: 9px 14px; }
+  .hm-buy:hover, .hm-buy:focus-visible { filter: brightness(1.12); outline: none; }
+  .hm-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hm-links a { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--btn-ink); text-decoration: none;
+    border: 1px solid var(--line); padding: 7px 11px; transition: border-color .2s, color .2s; }
+  .hm-links a:hover, .hm-links a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+  .hm-player { display: flex; justify-content: center; }
+  .hm-player iframe { display: block; border: 0; width: 100%; max-width: 520px; background: #000; border-radius: 4px; }
+  .hm-noplay { font-size: 15px; color: var(--soft); padding: 40px 10px; text-align: center; border: 1px dashed var(--line); width: 100%; }
+
+  /* ---- share ---- */
+  .hm-share { position: relative; }
+  .hm-share > button { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line); color: var(--ink);
+    padding: 8px 13px; font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; }
+  .hm-share > button:hover, .hm-share > button[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+  .hm-share svg { width: 14px; height: 14px; fill: currentColor; }
+  .hm-menu { position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 20; min-width: 210px; background: #0a0a0a; padding: 6px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35); border-top: 3px solid var(--accent); }
+  .hm-menu[hidden] { display: none; }
+  .hm-menu a, .hm-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; color: #fff !important; text-decoration: none;
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 12px; }
+  .hm-menu a:hover, .hm-menu button:hover, .hm-menu a:focus-visible, .hm-menu button:focus-visible { background: #e3122a; outline: none; }
+  .hm-menu input { width: 100%; margin: 4px 0 2px; padding: 8px; font: 12px 'Open Sans', sans-serif; border: 0; }
+
+  /* ---- shelves ---- */
+  .hm-shelf { margin-top: 30px; }
+  .hm-shelf h3 { display: flex; align-items: baseline; gap: 12px; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 24px;
+    letter-spacing: 2px; text-transform: uppercase; margin: 0 0 12px; }
+  .hm-shelf h3 small { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 2.5px; color: var(--soft); }
+  .hm-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 12px; scrollbar-width: thin; }
+  .hm-pick { flex: 0 0 150px; scroll-snap-align: start; text-align: left; background: none; border: 0; padding: 0; color: var(--ink); }
+  .hm-pick i { display: block; width: 150px; height: 150px; background: #222 center/cover no-repeat; border: 2px solid transparent;
+    transition: transform .2s, border-color .2s; position: relative; }
+  .hm-pick i em { position: absolute; inset: auto 0 0 0; padding: 22px 8px 8px; font-style: normal; font-size: 13px; letter-spacing: 1px;
+    text-transform: uppercase; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+  .hm-pick span { display: block; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hm-pick small { display: block; font-size: 11.5px; letter-spacing: 2px; color: var(--soft); text-transform: uppercase; }
+  .hm-pick:hover i, .hm-pick:focus-visible i { transform: translateY(-3px); border-color: var(--accent); }
+  .hm-pick:focus-visible { outline: none; }
+  .hm-pick[aria-current="true"] i { border-color: var(--accent); box-shadow: 0 10px 26px -10px var(--accent); }
+
+  .hm-msg { text-align: center; font-size: 16px; color: var(--soft); padding: 40px 10px; }
+  .hm-foot { text-align: center; font-family: 'Great Vibes', cursive; font-size: 30px; color: var(--gold); margin: 30px 0 0; }
+
+  @media (max-width: 760px) {
+    .hm-wrap { padding: 0 14px; }
+    .hm-head { padding: 24px 0 14px; }
+    .hm-script { font-size: 40px; }
+    .hm-title { font-size: 40px; letter-spacing: 2px; }
+    .hm-sub { font-size: 12.5px; letter-spacing: 2px; }
+    .hm-spot { grid-template-columns: 1fr; gap: 20px; padding: 16px; }
+    .hm-player { order: -1; }
+    .hm-cover { width: 92px; }
+    .hm-name { font-size: 30px; }
+    .hm-lead { font-size: 17px; }
+    .hm-pick { flex-basis: 124px; }
+    .hm-pick i { width: 124px; height: 124px; }
+  }
+</style>
+
+<div id="hm" class="s-off"><div class="hm-wrap"><p class="hm-msg">Loading…</p></div></div>
+
+<script>
+(function () {
+  /* ================= Settings ================= */
+  // Seasons by month-day in Manila. "songs" says which list plays; "day" is the date the countdown runs to.
+  var SEASONS = [
+    { key: 'christmas', from: '11-01', to: '12-25', day: '12-25', name: 'Christmas', songs: 'christmas', sky: 'snow',
+      script: 'Merry Christmas', title: 'Holiday Music', sub: 'Original Christmas songs by Danyel OZ',
+      today: "Merry Christmas! Today's the day", foot: 'A little music. A little warmth.' },
+    { key: 'newyear', from: '12-26', to: '01-06', day: '01-01', name: 'New Year', songs: 'christmas', sky: 'spark',
+      script: 'Happy New Year', title: 'Holiday Music', sub: 'Songs to carry into the new year',
+      today: 'Happy New Year!', after: 'Happy New Year', foot: 'A reason to come together.' },
+    { key: 'valentine', from: '01-25', to: '02-15', day: '02-14', name: "Valentine's Day", songs: 'valentine', sky: 'heart',
+      script: 'Be my Valentine', title: 'Love Songs', sub: 'For the one you are thinking of right now',
+      today: "Happy Valentine's Day", after: 'Love is not just for one day', foot: 'Send one to someone.' }
+  ];
+  var OFF = { key: 'off', script: 'Songs for every season', title: 'Holiday Music', sub: 'Christmas and love songs by Danyel OZ',
+    foot: 'A little music. A little warmth. A reason to come together.' };
+  var SHELF_NAMES = { christmas: 'Christmas music', valentine: 'Love songs' };
+  var CHRISTMAS_WORDS = /christmas|xmas|navidad|holiday|santa|mistletoe|jingle|noel|snowfall/i;
+  var LOVE_WORDS = /\b(love|loving|heart|hearts|kiss|valentine|date|romance|forever)\b/i;
+  var MAX_SONGS = 12;           // per season
+  var SOON_DAYS = 45;           // an upcoming song shows (with its date) once it is this close
+  var PAGE_URL  = 'https://www.danyeloz.info/released/holiday-music-seasonal-songs';
+  var SITE_LINE = 'Want more? Check my Official Site';   // added to shared posts; '' switches it off
+  var SITE_URL  = 'https://www.danyeloz.info/home';
+  var READ_MORE = 'Read the story', READ_LESS = 'Show less';
+  var FLAKES    = 26;           // how many snowflakes, hearts or sparkles (0 = none)
+  /* ============================================ */
+
+  var SHEET_ID = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
+  var BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
+  var SONGS_CSV = BASE + '&gid=0', SEASONAL_CSV = BASE + '&sheet=seasonal';
+  var TIME_ZONE = 'Asia/Singapore';
+  var LINKS = [['appl_music_link', 'Apple Music', /^https:\/\/(music|geo\.music|itunes)\.apple\.com\//i],
+               ['spotify_link', 'Spotify', /^https:\/\/open\.spotify\.com\//i],
+               ['yt_video_link', 'YouTube', /^https:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//i],
+               ['amazon_link', 'Amazon Music', /^https:\/\/(music\.)?amazon\.[a-z.]+\//i]];
+
+  var q = new URLSearchParams(location.search);
+  var root = document.getElementById('hm');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function norm(s) { return String(s || '').toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').trim(); }
+  function parseCSV(t) {
+    var rows = [], row = [], cur = '', inq = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+      else if (c === '"') inq = true; else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase(); });
+    return { head: head, rows: rows.filter(function (r) { return r.some(function (v) { return v.trim(); }); }).map(function (r) {
+      var o = {}; head.forEach(function (h, k) { o[h] = (r[k] || '').trim(); }); return o; }) };
+  }
+  function get(url) { return fetch(url).then(function (r) { return r.ok ? r.text() : ''; }).then(parseCSV).catch(function () { return { head: [], rows: [] }; }); }
+  function isoDate(v) { var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[0] : ''; }
+  function today() {
+    var d = isoDate(q.get('date'));
+    return d || new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date());
+  }
+  function niceDate(iso) {
+    var p = iso.split('-').map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+  function isoDateAdd(iso, n) { return new Date((dayNum(iso) + n) * 864e5).toISOString().slice(0, 10); }
+  function dayNum(iso) { var p = iso.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 864e5; }
+  function imageUrl(u) {
+    u = String(u || '').trim(); if (!/^https:\/\//i.test(u)) return '';
+    var m = /drive\.google\.com/.test(u) && (u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/));
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w800' : u;
+  }
+  function cssUrl(u) { return u ? 'url("' + u.replace(/["\\\n\r]/g, '') + '")' : ''; }
+  function bandcamp(code) {
+    var m = String(code || '').match(/src\s*=\s*["']https:\/\/bandcamp\.com\/EmbeddedPlayer\/((?:album|track)=\d+)/i);
+    return m ? m[1] : '';
+  }
+  function bandcampPage(code) {
+    var m = String(code || '').match(/href\s*=\s*["'](https:\/\/[a-z0-9-]+\.bandcamp\.com\/[^"'\s<>]+)["']/i);
+    return m ? m[1] : '';
+  }
+
+  /* ---------- which season is it? ---------- */
+  function inWindow(md, s) { return s.from <= s.to ? md >= s.from && md <= s.to : md >= s.from || md <= s.to; }
+  function pickSeason(iso) {
+    var force = norm(q.get('season'));
+    if (force === 'off') return OFF;
+    var f = SEASONS.filter(function (s) { return s.key === force; })[0];
+    if (f) return f;
+    var md = iso.slice(5);
+    return SEASONS.filter(function (s) { return inWindow(md, s); })[0] || OFF;
+  }
+  // Days from today to the next time this month-day comes round (0 = today).
+  function daysUntil(iso, md) {
+    var y = Number(iso.slice(0, 4)), t = dayNum(iso), d = dayNum(y + '-' + md);
+    if (d < t) d = dayNum((y + 1) + '-' + md);
+    return d - t;
+  }
+  function countdown(iso, s) {
+    if (s.key === 'off') {
+      var next = SEASONS.filter(function (x) { return x.key !== 'newyear'; })
+        .map(function (x) { return { s: x, n: daysUntil(iso, x.from) }; }).sort(function (a, b) { return a.n - b.n; })[0];
+      return { n: next.n, text: next.n === 1 ? 'day until ' + next.s.name + ' season' : 'days until ' + next.s.name + ' season' };
+    }
+    var n = daysUntil(iso, s.day);
+    var past = n > 300;   // the day has passed but the season is still on
+    if (n === 0) return { n: '', text: s.today };
+    if (past) return { n: '', text: s.after || s.today };
+    return { n: n, text: n === 1 ? 'day to ' + s.name : 'days to ' + s.name };
+  }
+
+  /* ---------- the songs ---------- */
+  function isChristmas(s) { return /holiday|christmas/i.test(s.song_genre || '') || CHRISTMAS_WORDS.test(s.song_title || ''); }
+  function isLove(s) { return !isChristmas(s) && (/love|romantic/i.test(s.song_genre || '') || LOVE_WORDS.test(s.song_title || '')); }
+  function playable(s) { return !!bandcamp(s.bandcamp_embed) || /^\d+$/.test(String(s.song_id || '').trim()); }
+  function byNewest(a, b) { return isoDate(b.release_date).localeCompare(isoDate(a.release_date)); }
+  function listFor(key, songs, picks) {
+    var mine = picks.filter(function (p) { return norm(p.season) === key || norm(p.season).indexOf(key.slice(0, 5)) === 0; })
+      .sort(function (a, b) { return (Number(a.position) || 99) - (Number(b.position) || 99); });
+    var out = [];
+    mine.forEach(function (p) {
+      var s = songs.filter(function (x) { return p.song_id && String(x.song_id).trim() === String(p.song_id).trim(); })[0] ||
+              songs.filter(function (x) { return norm(x.song_title) === norm(p.song_title); })[0];
+      if (s && out.indexOf(s) < 0) out.push(s);
+    });
+    if (!out.length) {
+      var test = key === 'valentine' ? isLove : isChristmas;
+      out = songs.filter(test).sort(function (a, b) {
+        // romantic genre first (for Valentine's), then playable on Bandcamp, then newest
+        var rom = function (x) { return /romantic|love/i.test(x.song_genre || '') ? 1 : 0; };
+        return rom(b) - rom(a) || (bandcamp(b.bandcamp_embed) ? 1 : 0) - (bandcamp(a.bandcamp_embed) ? 1 : 0) || byNewest(a, b);
+      });
+    }
+    var soon = isoDateAdd(today(), SOON_DAYS);   // far-off releases wait their turn
+    return out.filter(function (s) { var d = isoDate(s.release_date); return playable(s) && (!d || d <= soon); }).slice(0, MAX_SONGS);
+  }
+
+  /* ---------- decorations ---------- */
+  function sky(kind) {
+    var box = el('div', 'hm-sky'); box.setAttribute('aria-hidden', 'true');
+    if (!kind || !FLAKES) return box;
+    for (var i = 0; i < FLAKES; i++) {
+      var f = el('span', kind), r = function (a, b) { return a + Math.random() * (b - a); };
+      f.style.left = r(0, 100) + '%';
+      f.style.animationDuration = r(kind === 'heart' ? 9 : 7, kind === 'heart' ? 16 : 15) + 's';
+      f.style.animationDelay = (-r(0, 15)) + 's';
+      f.style.setProperty('--drift', r(-60, 60) + 'px');
+      if (kind === 'snow') { var z = r(3, 8); f.style.width = f.style.height = z + 'px'; f.style.opacity = r(.45, .95); }
+      if (kind === 'heart') f.style.transform = 'scale(' + r(.6, 1.2) + ')';
+      box.appendChild(f);
+    }
+    return box;
+  }
+
+  /* ---------- share menu (same as the Singles and Albums pages) ---------- */
+  var openMenu = null;
+  function closeMenus() { if (openMenu) { openMenu.menu.hidden = true; openMenu.btn.setAttribute('aria-expanded', 'false'); openMenu = null; } }
+  document.addEventListener('click', function (e) { if (openMenu && !openMenu.wrap.contains(e.target)) closeMenus(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
+  function shareMenu(song) {
+    var url = bandcampPage(song.bandcamp_embed) || PAGE_URL;
+    var text = '"' + song.song_title + '" by Danyel OZ';
+    var more_ = (SITE_LINE && url !== SITE_URL) ? '\n\n' + SITE_LINE + ' ' + SITE_URL : '';
+    var post = text + ' ' + url + more_;
+    var wrap = el('div', 'hm-share'), btn = el('button');
+    btn.type = 'button'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.8-3.4a3 3 0 0 0 0-1.6l6.8-3.4A3 3 0 1 0 15 7c0 .3 0 .5.1.8L8.3 11.2a3 3 0 1 0 0 3.6l6.8 3.4A3 3 0 1 0 18 16z"/></svg>';
+    btn.appendChild(document.createTextNode('Share'));
+    var menu = el('div', 'hm-menu'); menu.hidden = true; menu.setAttribute('role', 'menu');
+    var e = encodeURIComponent;
+    [['X', 'https://x.com/intent/post?text=' + e(post)],
+     ['Facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + e(url)],
+     ['WhatsApp', 'https://wa.me/?text=' + e(post)],
+     ['Threads', 'https://www.threads.net/intent/post?text=' + e(post)],
+     ['Telegram', 'https://t.me/share/url?url=' + e(url) + '&text=' + e(text + more_)]].forEach(function (p) {
+      var a = el('a', null, p[0]); a.href = p[1]; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('role', 'menuitem');
+      a.addEventListener('click', closeMenus); menu.appendChild(a);
+    });
+    var copy = el('button', null, 'Copy link'); copy.type = 'button'; copy.setAttribute('role', 'menuitem');
+    copy.addEventListener('click', function () {
+      function shown() {
+        if (menu.querySelector('input')) return;
+        var inp = el('input'); inp.value = url; inp.readOnly = true; inp.setAttribute('aria-label', 'Link to copy');
+        menu.appendChild(inp); inp.focus(); inp.select(); copy.textContent = 'Select and copy';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy link'; }, 1600); }, shown);
+      } else shown();
+    });
+    menu.appendChild(copy);
+    if (navigator.share) {
+      var more = el('button', null, 'More apps…'); more.type = 'button'; more.setAttribute('role', 'menuitem');
+      more.addEventListener('click', function () { navigator.share({ title: song.song_title, text: text + more_, url: url }).catch(function () {}); closeMenus(); });
+      menu.appendChild(more);
+    }
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var was = openMenu && openMenu.menu === menu; closeMenus();
+      if (!was) { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); openMenu = { menu: menu, btn: btn, wrap: wrap }; }
+    });
+    wrap.appendChild(btn); wrap.appendChild(menu);
+    return wrap;
+  }
+
+  /* ---------- the spotlight ---------- */
+  var spot = null, picks = [];
+  function player(s) {
+    var box = el('div', 'hm-player'), bc = bandcamp(s.bandcamp_embed), f = el('iframe');
+    var isAlbum = /^album=/.test(bc);
+    var dark = root.className.indexOf('s-valentine') < 0 && root.className.indexOf('s-off') < 0;
+    var link = getComputedStyle(root).getPropertyValue('--accent').trim().replace('#', '') || 'e3122a';
+    if (bc) {
+      f.src = 'https://bandcamp.com/EmbeddedPlayer/' + bc + '/size=large/bgcol=' + (dark ? '000000' : 'ffffff') + '/linkcol=' + link +
+        (isAlbum ? '/artwork=small/tracklist=true' : '/tracklist=false') + '/transparent=true/';
+      f.style.height = (isAlbum ? 472 : 470) + 'px';
+      if (!isAlbum) f.style.maxWidth = '350px';
+      f.title = 'Play ' + s.song_title + ' on Bandcamp';
+    } else if (/^\d+$/.test(String(s.song_id || '').trim())) {
+      f.src = 'https://embed.music.apple.com/us/album/' + String(s.song_id).trim() + '?theme=' + (dark ? 'dark' : 'light');
+      f.style.height = '450px'; f.title = 'Play ' + s.song_title + ' on Apple Music';
+      f.setAttribute('allow', 'autoplay *; encrypted-media *;');
+    } else { box.appendChild(el('p', 'hm-noplay', 'Listening links for this one are coming soon.')); return box; }
+    f.setAttribute('seamless', ''); if (bc) f.setAttribute('allow', 'autoplay');
+    box.appendChild(f);
+    return box;
+  }
+  function info(s) {
+    var box = el('div', 'hm-info'), top = el('div', 'hm-top');
+    var c = el('div', 'hm-cover'), img = imageUrl(s.song_arts);
+    if (img) c.style.backgroundImage = cssUrl(img);
+    top.appendChild(c);
+    var t = el('div'), iso = isoDate(s.release_date), now = today();
+    t.appendChild(el('span', 'hm-tag', s.release_type || 'Single'));
+    if (iso) t.appendChild(el('span', 'hm-tag ghost', iso > now ? 'Out ' + niceDate(iso) : iso.slice(0, 4)));
+    t.appendChild(el('h2', 'hm-name', s.song_title));
+    top.appendChild(t); box.appendChild(top);
+
+    var paras = String(s.song_description || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
+    if (paras.length) box.appendChild(el('p', 'hm-lead', paras[0]));
+    var actions = el('div', 'hm-actions');
+    if (paras.length > 1) {
+      var story = el('div', 'hm-story'); story.hidden = true;
+      paras.slice(1).forEach(function (p) {
+        var para = el('p');
+        p.split('\n').forEach(function (line, k) { if (k) para.appendChild(el('br')); para.appendChild(document.createTextNode(line)); });
+        story.appendChild(para);
+      });
+      box.appendChild(story);
+      var more = el('button', 'hm-more', READ_MORE); more.type = 'button'; more.setAttribute('aria-expanded', 'false');
+      more.addEventListener('click', function () {
+        story.hidden = !story.hidden; more.textContent = story.hidden ? READ_MORE : READ_LESS;
+        more.setAttribute('aria-expanded', String(!story.hidden));
+      });
+      actions.appendChild(more);
+    }
+    actions.appendChild(shareMenu(s));
+    var page = bandcampPage(s.bandcamp_embed);
+    if (page) { var buy = el('a', 'hm-buy', iso > now ? 'Pre-order' : 'Buy on Bandcamp'); buy.href = page; buy.target = '_blank'; buy.rel = 'noopener'; actions.appendChild(buy); }
+    box.appendChild(actions);
+    var links = el('div', 'hm-links');
+    LINKS.forEach(function (L) {
+      var u = String(s[L[0]] || '').trim();
+      if (L[2].test(u)) { var a = el('a', null, L[1]); a.href = u; a.target = '_blank'; a.rel = 'noopener'; links.appendChild(a); }
+    });
+    if (links.children.length) box.appendChild(links);
+    return box;
+  }
+  function show(s) {
+    closeMenus();
+    spot.innerHTML = '';
+    spot.appendChild(info(s)); spot.appendChild(player(s));
+    picks.forEach(function (p) { p.btn.setAttribute('aria-current', String(p.song === s)); });
+  }
+
+  function shelf(title, note, list) {
+    var sec = el('section', 'hm-shelf'), h = el('h3', null, title);
+    if (note) h.appendChild(el('small', null, note));
+    sec.appendChild(h);
+    var row = el('div', 'hm-row');
+    list.forEach(function (s) {
+      var b = el('button', 'hm-pick'); b.type = 'button'; b.setAttribute('aria-label', 'Play ' + s.song_title);
+      var i = el('i'), img = imageUrl(s.song_arts);
+      if (img) i.style.backgroundImage = cssUrl(img); else i.appendChild(el('em', null, s.song_title));
+      b.appendChild(i); b.appendChild(el('span', null, s.song_title));
+      var iso = isoDate(s.release_date);
+      b.appendChild(el('small', null, [s.release_type || 'Single', iso ? (iso > today() ? 'Out ' + niceDate(iso) : iso.slice(0, 4)) : ''].filter(Boolean).join(' · ')));
+      b.addEventListener('click', function () { show(s); spot.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      picks.push({ song: s, btn: b }); row.appendChild(b);
+    });
+    sec.appendChild(row);
+    return sec;
+  }
+
+  /* ---------- build ---------- */
+  Promise.all([get(SONGS_CSV), get(SEASONAL_CSV)]).then(function (res) {
+    var iso = today(), season = pickSeason(iso);
+    var songs = res[0].rows.filter(function (s) { return s.song_title; });
+    var chosen = res[1].head.indexOf('season') >= 0 ? res[1].rows : [];
+    var lists = { christmas: listFor('christmas', songs, chosen), valentine: listFor('valentine', songs, chosen) };
+
+    root.className = 's-' + season.key;
+    root.innerHTML = '';
+    root.appendChild(sky(season.sky));
+    var wrap = el('div', 'hm-wrap'); root.appendChild(wrap);
+
+    var head = el('header', 'hm-head');
+    head.appendChild(el('p', 'hm-script', season.script));
+    head.appendChild(el('h1', 'hm-title', season.title));
+    head.appendChild(el('p', 'hm-sub', season.sub));
+    var cd = countdown(iso, season), chip = el('div', 'hm-chip');
+    if (cd.n !== '') chip.appendChild(el('b', null, String(cd.n)));
+    chip.appendChild(document.createTextNode(cd.text));
+    head.appendChild(chip);
+    wrap.appendChild(head);
+
+    // Season on: its own list leads. Off season: the season coming up next leads, then the other one.
+    var order;
+    if (season.key === 'off') {
+      var nextKey = daysUntil(iso, '11-01') <= daysUntil(iso, '01-25') ? 'christmas' : 'valentine';
+      order = nextKey === 'christmas' ? ['christmas', 'valentine'] : ['valentine', 'christmas'];
+    } else order = [season.songs];
+    order = order.filter(function (k) { return lists[k].length; });
+    if (!order.length) { wrap.appendChild(el('p', 'hm-msg', 'Holiday songs are on their way. Check back soon.')); return; }
+
+    spot = el('div', 'hm-spot'); wrap.appendChild(spot);
+    order.forEach(function (k, n) {
+      var list = lists[k];
+      if (n === 0 && list.length < 2) return;   // one song: the spotlight already shows it
+      var note = n === 0 ? 'Tap a cover to play' : '';
+      wrap.appendChild(shelf(SHELF_NAMES[k], note, list));
+    });
+    show(lists[order[0]][0]);
+    wrap.appendChild(el('p', 'hm-foot', season.foot));
+  });
+})();
+</script>
+</body>
+</html>
