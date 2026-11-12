@@ -128,11 +128,19 @@
   var NEXT_ON_TOP = true;           // Coming next banner first; false puts it at the bottom
   var READ_MORE  = 'Read the story';
   var READ_LESS  = 'Show less';
-  var PAGE_URL   = 'https://www.danyeloz.info/released/albums-original-music-stories';
-  var NO_STORY   = 'The story behind this album is on its way.';
+  var ALBUMS_URL = 'https://www.danyeloz.info/released/albums-original-music-stories';
+  var EPS_URL    = '';                // the EPs page address, for Share when a release has no Bandcamp page yet
   var SITE_LINE  = 'Want more? Check my Official Site';   // added to shared posts; '' switches it off
   var SITE_URL   = 'https://www.danyeloz.info/home';
   /* ============================================ */
+
+  // albums.html shows albums; albums.html?page=ep shows EPs. Both are sorted in the admin app.
+  var IS_EP = /[?&]page=ep(&|$)/.test(location.search);
+  var W = IS_EP
+    ? { tag: 'EP', one: 'EP', many: 'EPs', buy: 'Buy the EP', latest: 'Latest EP', more: 'More EPs', none: 'EPs are on the way.', news: 'New EP news soon.', label: 'EPs' }
+    : { tag: 'Album', one: 'album', many: 'albums', buy: 'Buy the album', latest: 'Latest album', more: 'More albums', none: 'Albums are on the way.', news: 'New album news soon.', label: 'Albums' };
+  var PAGE_URL   = (IS_EP ? EPS_URL : ALBUMS_URL) || 'https://www.danyeloz.info/home';
+  var NO_STORY   = 'The story behind this ' + W.one + ' is on its way.';
 
   var SHEET_ID = '1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw';
   var BASE = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
@@ -242,7 +250,7 @@
     var s = el('div', 'al-script', script); s.style.color = a.accent; info.appendChild(s);
     info.appendChild(el(isSleeve ? 'h3' : 'h2', 'al-h', a.title));
     var tags = el('div', 'al-tags');
-    var t1 = el('span', 'al-tag', 'Album · ' + a.year); t1.style.background = a.accent; t1.style.color = '#0a0506'; tags.appendChild(t1);
+    var t1 = el('span', 'al-tag', W.tag + ' · ' + a.year); t1.style.background = a.accent; t1.style.color = '#0a0506'; tags.appendChild(t1);
     if (a.trackText) tags.appendChild(el('span', 'al-tag line', a.trackText));
     if (a.partOf) tags.appendChild(el('span', 'al-tag line', 'Part of ' + a.partOf));
     if (a.alias) tags.appendChild(el('span', 'al-tag line', 'Released as ' + a.alias));
@@ -268,7 +276,7 @@
     var btns = el('div', 'al-btns');
     var buyUrl = a.store || a.page;
     if (buyUrl) {
-      var buy = el('a', 'al-btn solid', a.isFuture ? 'Pre-order' : (a.store && a.store !== a.page ? 'Store' : 'Buy the album'));
+      var buy = el('a', 'al-btn solid', a.isFuture ? 'Pre-order' : (a.store && a.store !== a.page ? 'Store' : W.buy));
       buy.href = buyUrl; buy.target = '_blank'; buy.rel = 'noopener'; buy.style.background = a.accent; btns.appendChild(buy);
     }
     if (story) {
@@ -295,11 +303,11 @@
   /* ---------- page ---------- */
   /* ---------- Coming next banner (also the whole page with ?only=next) ---------- */
   function nextBanner(a, cls, isLatest) {
-    var n = el('section', 'al-hero al-next' + (cls ? ' ' + cls : '')); n.setAttribute('aria-label', isLatest ? 'Latest album' : 'Coming next');
+    var n = el('section', 'al-hero al-next' + (cls ? ' ' + cls : '')); n.setAttribute('aria-label', isLatest ? W.latest : 'Coming next');
     var inner = el('div', 'al-hero-in');
     if (a.cover) { var img = el('img'); img.src = a.cover; img.alt = a.title + ' cover'; img.onerror = function () { img.remove(); }; inner.appendChild(img); }
     var info = el('div', 'al-info');
-    info.appendChild(el('div', 'al-script', isLatest ? 'Latest album' : 'Coming next'));
+    info.appendChild(el('div', 'al-script', isLatest ? W.latest : 'Coming next'));
     info.appendChild(el('h2', 'al-h', a.title));
     var tags = el('div', 'al-tags');
     var d1 = el('span', 'al-tag', isLatest ? 'Out now' : 'Out ' + longDate(a.date)); d1.style.background = '#fff'; d1.style.color = '#b0101f'; tags.appendChild(d1);
@@ -337,7 +345,7 @@
       if (g.tagline) left.appendChild(el('span', 'tl', g.tagline));
       if (g.alias) left.appendChild(el('span', 'al-alias', 'Released as ' + g.alias));
       head.appendChild(left);
-      head.appendChild(el('span', 'al-count', g.albums.length + (g.albums.length === 1 ? ' album' : ' albums')));
+      head.appendChild(el('span', 'al-count', g.albums.length + ' ' + (g.albums.length === 1 ? W.one : W.many)));
       sec.appendChild(head);
       var row = el('div', 'al-row'), slot = el('div');
       g.albums.forEach(function (a) {
@@ -377,9 +385,11 @@
 
   Promise.all([get(BASE + '&gid=0'), get(BASE + '&sheet=albums'), get(BASE + '&sheet=album_collections')]).then(function (res) {
     var now = today();
-    var songs = res[0].rows.filter(function (s) { return s.song_title && /^\s*album\s*$/i.test(s.release_type || ''); });
+    var songs = res[0].rows.filter(function (s) { return s.song_title && /^\s*(album|ep)\s*$/i.test(s.release_type || ''); });
     var picks = res[1].head.indexOf('kind') >= 0 ? res[1].rows : [];
-    var cols = res[2].head.indexOf('name') >= 0 ? res[2].rows : [];
+    var cols = (res[2].head.indexOf('name') >= 0 ? res[2].rows : []).filter(function (c) {   // each page has its own collections
+      return (String(c.page || '').trim().toLowerCase() || 'album') === (IS_EP ? 'ep' : 'album');
+    });
     function pickFor(s) {
       return picks.filter(function (p) { return p.song_id && String(p.song_id) === String(s.song_id); })[0] ||
              picks.filter(function (p) { return norm(p.song_title) === norm(s.song_title); })[0] || {};
@@ -390,7 +400,7 @@
       var tracks = /^\d+$/.test(p.tracks || '') ? Number(p.tracks) : 0, bonus = /^\d+$/.test(p.bonus || '') ? Number(p.bonus) : 0;
       var page = bandcampPage(s.bandcamp_embed), store = /^https:\/\//i.test(p.store_url || '') ? p.store_url : '';
       return {
-        title: s.song_title, date: iso, year: iso ? iso.slice(0, 4) : '', isFuture: !!iso && iso > now,
+        type: /ep/i.test(s.release_type) ? 'ep' : 'album', title: s.song_title, date: iso, year: iso ? iso.slice(0, 4) : '', isFuture: !!iso && iso > now,
         cover: imageUrl(s.song_arts), paras: paras, accent: accent, bcId: bandcampId(s.bandcamp_embed), page: page, store: store,
         kind: p.kind || 'unsorted', show: yes(p.show) && p.kind !== 'single', partOf: p.kind === 'installment' ? (p.part_of || '') : '',
         collection: p.collection || '', position: Number(p.position) || 99, featured: yes(p.featured),
@@ -398,9 +408,17 @@
         trackText: tracks ? tracks + (bonus ? ' + ' + bonus + ' bonus' : '') + ' tracks' : ''
       };
     });
-    var shown = ALL.filter(function (a) { return a.show; });
+    // Which releases belong on this page. A release marked "ep" in the admin app shows on the EPs page whatever its
+    // release_type. An EP marked "part of an album" shows on neither page, only inside that album's sleeve.
+    function onThisPage(a) {
+      if (a.kind === 'single') return false;
+      if (IS_EP) return a.kind === 'ep' || (a.kind === 'unsorted' && a.type === 'ep');
+      return a.type === 'album' && a.kind !== 'ep';
+    }
+    var mine = ALL.filter(onThisPage);
+    var shown = mine.filter(function (a) { return a.show; });
     var fallback = !shown.length;
-    if (fallback) shown = ALL.filter(function (a) { return a.bcId && a.paras.length && !a.isFuture; });   // before anything is picked in the admin app
+    if (fallback) shown = mine.filter(function (a) { return a.bcId && a.paras.length && !a.isFuture; });   // before anything is picked in the admin app
 
     var visibleCols = cols.filter(function (c) { return c.name && !/^(false|no|0|hide|hidden)$/i.test(c.visible || ''); })
       .sort(function (a, b) { return (Number(a.slot) || 99) - (Number(b.slot) || 99); });
@@ -412,23 +430,23 @@
     });
     var loose = shown.filter(function (a) { return !groups.some(function (g) { return g.albums.indexOf(a) >= 0; }); })
       .sort(function (a, b) { return a.position - b.position || b.date.localeCompare(a.date); });
-    if (loose.length) { loose.forEach(function (a) { a.group = groups.length ? 'More albums' : 'Albums'; }); groups.push({ id: 'more', name: groups.length ? 'More albums' : 'Albums', albums: loose }); }
+    if (loose.length) { loose.forEach(function (a) { a.group = groups.length ? W.more : W.label; }); groups.push({ id: 'more', name: groups.length ? W.more : W.label, albums: loose }); }
 
     var released = shown.filter(function (a) { return !a.isFuture; });
     var hero = shown.filter(function (a) { return a.featured; })[0] ||
-               released.filter(function (a) { return a.kind === 'main' && a.paras.length && a.bcId; }).sort(function (a, b) { return b.date.localeCompare(a.date); })[0] ||
+               released.filter(function (a) { return a.kind === (IS_EP ? 'ep' : 'main') && a.paras.length && a.bcId; }).sort(function (a, b) { return b.date.localeCompare(a.date); })[0] ||
                released.slice().sort(function (a, b) { return b.date.localeCompare(a.date); })[0] || null;
-    var next = ALL.filter(function (a) { return a.isFuture && a.kind !== 'single' && a.kind !== 'ep'; })
+    var next = mine.filter(function (a) { return a.isFuture; })
       .sort(function (a, b) { return a.date.localeCompare(b.date); })[0] || null;
 
     if (ONLY_NEXT) {   // just the banner, for Home or Released; when nothing is coming it shows the latest album instead of an empty box
       root.innerHTML = '';
       if (next) root.appendChild(nextBanner(next, 'solo', false));
       else if (hero) root.appendChild(nextBanner(hero, 'solo', true));
-      else root.appendChild(el('p', 'al-msg', 'New album news soon.'));
+      else root.appendChild(el('p', 'al-msg', W.news));
       return;
     }
-    if (!hero && !groups.length && !next) { root.innerHTML = ''; root.appendChild(el('p', 'al-msg', 'Albums are on the way.')); return; }
+    if (!hero && !groups.length && !next) { root.innerHTML = ''; root.appendChild(el('p', 'al-msg', W.none)); return; }
     render(hero, groups, next);
   });
 })();

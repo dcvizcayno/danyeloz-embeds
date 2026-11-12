@@ -28,7 +28,7 @@ Each page has a **Settings** block at the top of its script.
 | `release-shelf.html` | Released page: swipeable shelf, `?type=Single`, `EP` or `Album` (Sheet1) |
 | `featured-singles.html` | Singles page: the 10 Featured Singles (featured_singles tab), details left and Bandcamp player right; `?layout=list`, `?n=3` |
 | `explore-themes.html` | Singles page: Explore by Theme (themes tab + song_theme_1/2), small player, Read more, Share; `?theme=Heartbreak` |
-| `albums.html` | Albums page: Coming next banner on top, Now spinning, collections, sleeves in each album's color (albums + album_collections tabs); `?only=next` shows just the banner (latest album when nothing is coming) |
+| `albums.html` | Albums page: Coming next banner on top, Now spinning, collections, sleeves in each album's color (albums + album_collections tabs); `?only=next` shows just the banner (latest album when nothing is coming); `?page=ep` is the EPs page (same design, EP collections) |
 
 Data comes from the public Song Database sheet and the Apple Music catalog. Nothing secret lives here.
 The data entry app lives in the private repo `DanyelOZ-Official-Website`.
