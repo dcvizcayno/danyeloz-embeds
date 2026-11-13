@@ -50,6 +50,8 @@
   .al-btn { text-decoration: none; padding: 12px 18px; font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
     border: 1px solid rgba(255,255,255,.6); background: transparent; color: #fff !important; }
   .al-btn:hover, .al-btn:focus-visible { background: #fff; color: #0a0506 !important; outline: none; }
+  .al-btns .ozl-btn { padding: 12px 18px; color: #fff; }
+  .al-info .ozl-view { margin-top: 18px; color: #fff; }
   .al-btn.solid { border: 0; padding: 13px 20px; font-weight: 600; color: #0a0506 !important; }
   .al-btn.solid:hover, .al-btn.solid:focus-visible { filter: brightness(1.12); }
   .al-parts { margin-top: 18px; font-size: 12px; letter-spacing: 2px; color: #bdb4b5; }
@@ -121,6 +123,7 @@
 
 <div id="al"><p class="al-msg">Loading…</p></div>
 
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/lyrics.js"></script>
 <script>
 (function () {
   /* ================= Settings ================= */
@@ -265,8 +268,9 @@
       });
       info.appendChild(story);
     }
+    var pl = null;
     if (a.bcId) {
-      var pl = el('div', 'al-player'), f = el('iframe');
+      pl = el('div', 'al-player'); var f = el('iframe');
       var n = Math.max(1, Math.min(Number(a.tracks) + Number(a.bonus || 0) || 10, 12));
       f.src = 'https://bandcamp.com/EmbeddedPlayer/' + a.bcId + '/size=large/bgcol=000000/linkcol=' + a.accent.slice(1).toLowerCase() + '/artwork=none/tracklist=true/transparent=true/';
       f.title = 'Play ' + a.title + ' on Bandcamp'; f.setAttribute('seamless', ''); f.setAttribute('allow', 'autoplay');
@@ -286,8 +290,12 @@
       });
       btns.appendChild(more);
     }
-    btns.appendChild(shareMenu(a));
+    var share = shareMenu(a);
+    btns.appendChild(share);
     info.appendChild(btns);
+    // Lyrics: the album player stays put, so fans can read along while it plays.
+    if (window.OZLyrics && a.row) window.OZLyrics.attach({ row: a.row, buttonHost: btns, before: share, panel: info, theme: 'dark', label: 'Lyrics',
+      keep: [pl, info.querySelector('.al-script'), info.querySelector('.al-h')].filter(Boolean) });
     var parts = ALL.filter(function (x) { return x.kind === 'installment' && norm(x.partOf) === norm(a.title); });
     if (parts.length && onOpen) {
       var pbox = el('div', 'al-parts', 'MORE FROM THIS STORY');
@@ -405,7 +413,7 @@
         kind: p.kind || 'unsorted', show: yes(p.show) && p.kind !== 'single', partOf: p.kind === 'installment' ? (p.part_of || '') : '',
         collection: p.collection || '', position: Number(p.position) || 99, featured: yes(p.featured),
         hook: p.hook || firstSentence(paras[0]) || s.song_title, tracks: tracks, bonus: bonus,
-        trackText: tracks ? tracks + (bonus ? ' + ' + bonus + ' bonus' : '') + ' tracks' : ''
+        trackText: tracks ? tracks + (bonus ? ' + ' + bonus + ' bonus' : '') + ' tracks' : '', row: s
       };
     });
     // Which releases belong on this page. A release marked "ep" in the admin app shows on the EPs page whatever its

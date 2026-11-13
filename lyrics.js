@@ -61,8 +61,9 @@
     var upc = upcOf(row.song_upc), list = [];
     if (upc && d.onRelease[upc]) {
       d.onRelease[upc].slice().sort(function (a, b) { return a.n - b.n; }).forEach(function (r) {
-        var s = d.songs[r.isrc]; if (s) list.push({ title: r.title || s.title, lyrics: s.lyrics });
+        var s = d.songs[r.isrc]; if (s) list.push({ title: r.title || s.title, lyrics: s.lyrics, no: r.n % 1000 });
       });
+      list.total = d.onRelease[upc].length;
     }
     if (!list.length) {
       var s = d.songs[isrcOf(row.song_isrc || row.song_ISRC)];
@@ -93,6 +94,7 @@
       '.ozl-sec{display:block;font:500 11.5px Oswald,"Arial Narrow",sans-serif;letter-spacing:2.5px;text-transform:uppercase;color:#e3122a;margin:4px 0 2px}' +
       '.ozl-dark .ozl-text{color:#e4e4e7}.ozl-light .ozl-text{color:#222}' +
       '.ozl-foot{font-size:12px;opacity:.6;margin:8px 0 0}' +
+      '.ozl-steps{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin:4px 0 0}.ozl-step{opacity:1}.ozl-count{margin:-6px 0 14px}' +
       '@media (max-width:480px){.ozl-title{font-size:24px}.ozl-text{font-size:14.5px}}';
     var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
   }
@@ -117,25 +119,37 @@
 
   function open(opts, list) {
     var panel = opts.panel, hidden = [];
-    Array.prototype.forEach.call(panel.children, function (c) { if (!c.hasAttribute('data-ozl-hide')) { hidden.push(c); c.setAttribute('data-ozl-hide', ''); } });
+    var keep = opts.keep || [];
+    Array.prototype.forEach.call(panel.children, function (c) { if (keep.indexOf(c) < 0 && !c.hasAttribute('data-ozl-hide')) { hidden.push(c); c.setAttribute('data-ozl-hide', ''); } });
     var view = el('div', 'ozl-view ' + (opts.theme === 'dark' ? 'ozl-dark' : 'ozl-light'));
     view.setAttribute('role', 'region'); view.setAttribute('aria-label', 'Lyrics');
     var top = el('div', 'ozl-top'), back = el('button', 'ozl-back', BACK); back.type = 'button';
     top.appendChild(back); top.appendChild(el('span', 'ozl-kick', LABEL));
     view.appendChild(top);
-    var title = el('h3', 'ozl-title'), body = el('div');
-    view.appendChild(title);
-    function show(i) {
-      title.textContent = list[i].title;
+    var title = el('h3', 'ozl-title'), body = el('div'), steps = el('div', 'ozl-steps');
+    var multi = list.length > 1;
+    function label(s) { return (multi && s.no ? s.no + '. ' : '') + s.title; }
+    function show(i, focus) {
+      title.textContent = label(list[i]);
       body.textContent = ''; body.appendChild(lyricsBlock(list[i].lyrics));
       Array.prototype.forEach.call(chips.children, function (c, k) { c.setAttribute('aria-pressed', String(k === i)); });
+      steps.textContent = '';
+      if (multi) {
+        if (i > 0) steps.appendChild(step('← ' + label(list[i - 1]), i - 1));
+        if (i < list.length - 1) steps.appendChild(step('Next: ' + label(list[i + 1]) + ' →', i + 1));
+      }
+      if (focus) { try { title.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
     }
+    function step(text, i) { var b = el('button', 'ozl-chip ozl-step', text); b.type = 'button'; b.addEventListener('click', function () { show(i, true); }); return b; }
     var chips = el('div', 'ozl-chips');
-    if (list.length > 1) {
-      list.forEach(function (s, i) { var c = el('button', 'ozl-chip', s.title); c.type = 'button'; c.addEventListener('click', function () { show(i); }); chips.appendChild(c); });
+    if (multi) {
+      list.forEach(function (s, i) { var c = el('button', 'ozl-chip', label(s)); c.type = 'button'; c.addEventListener('click', function () { show(i); }); chips.appendChild(c); });
       view.appendChild(chips);
+      if (list.total > list.length) view.appendChild(el('p', 'ozl-foot ozl-count', 'Lyrics for ' + list.length + ' of ' + list.total + ' songs so far.'));
     }
+    view.appendChild(title);
     view.appendChild(body);
+    view.appendChild(steps);
     view.appendChild(el('p', 'ozl-foot', 'Lyrics by Danyel OZ'));
     function close() {
       document.removeEventListener('keydown', onKey);
