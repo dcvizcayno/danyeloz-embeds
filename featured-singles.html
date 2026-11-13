@@ -95,6 +95,7 @@
 
 <div id="fs"><p class="fs-msg">Loading…</p></div>
 
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/lyrics.js"></script>
 <script>
 (function () {
   /* ================= Settings ================= */
@@ -242,7 +243,9 @@
       });
       actions.appendChild(more);
     }
-    actions.appendChild(shareMenu(song));
+    var share = shareMenu(song);
+    actions.appendChild(share);
+    if (window.OZLyrics) window.OZLyrics.attach({ row: song, buttonHost: actions, before: share, panel: box, theme: 'light' });
     var page = bandcampPage(song.bandcamp_embed);
     if (SHOW_BUY && page) { var buy = el('a', 'fs-buy', 'Buy on Bandcamp'); buy.href = page; buy.target = '_blank'; buy.rel = 'noopener'; actions.appendChild(buy); }
     box.appendChild(actions);

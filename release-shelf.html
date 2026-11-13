@@ -58,6 +58,8 @@
   .rs-desc-title { margin: 0 0 6px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; }
   .rs-desc p { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: #d4d4d8; }
   .rs-desc .rs-genre { margin: 0 0 8px; font-size: 12px; color: #a1a1aa; }
+  .rs-lyr:not(:empty) { margin: 0 0 12px; color: #e4e4e7; }
+  .rs-desc .ozl-title { font-size: 22px; }
   .rs-col iframe { flex: none; }
   @media (max-width: 560px) {   /* phones: player on top, story underneath, the whole view scrolls */
     .rs-split { display: flex; flex-direction: column; overflow-y: auto; gap: 14px; }
@@ -75,6 +77,7 @@
   <div class="rs-now" id="rs-now"></div>
 </div>
 
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/lyrics.js"></script>
 <script>
 (function () {
   /* ================= Settings ================= */
@@ -286,6 +289,10 @@
     right.appendChild(el('p', 'rs-desc-title', name));
     var bits = [row && row.song_genre, row && row.release_date ? fmtDate(row.release_date) : ''].filter(Boolean);
     if (bits.length) right.appendChild(el('p', 'rs-genre', bits.join(' · ')));
+    if (row && window.OZLyrics) {                                // Lyrics button when this release has published lyrics
+      var lyr = el('div', 'rs-lyr'); right.appendChild(lyr);
+      window.OZLyrics.attach({ row: row, buttonHost: lyr, panel: right, theme: 'dark' });
+    }
     var text = String((row && row.song_description) || '').trim();
     if (text) text.split(/\n\s*\n|\r?\n/).forEach(function (para) { if (para.trim()) right.appendChild(el('p', null, para.trim())); });
     else right.appendChild(el('p', null, 'The story behind this song is coming soon.'));

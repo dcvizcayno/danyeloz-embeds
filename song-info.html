@@ -43,11 +43,13 @@
   .ozi-qr-box img, .ozi-qr-box canvas { width: 130px !important; height: 130px !important; }
   .ozi-qr-text { font: 400 14px 'Oswald', sans-serif; letter-spacing: 1px; color: #333; max-width: 200px; }
   .ozi-story:not([hidden]) + .ozi-more { margin-top: 0; }
+  .ozi-lyr:not(:empty) { margin: -12px 0 26px; color: #111; }
 </style>
 
 <div id="ozi"><p class="ozi-muted">Loading…</p></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/lyrics.js"></script>
 <script>
 (function () {
   /* ================= Settings ================= */
@@ -66,7 +68,8 @@
     label: false,   // record label
     isrc:  true,
     upc:   false,
-    qr:    true
+    qr:    true,
+    lyrics: true    // Lyrics button when the song has published lyrics (Tracks screen)
   };
   var EMPTY_TEXT = 'The story behind this song is coming soon.';
   var COLLAPSE   = true;          // true = show the first paragraph, with "Read more…" for the rest
@@ -174,6 +177,11 @@
         });
         root.appendChild(more);
       }
+    }
+
+    if (SHOW.lyrics && window.OZLyrics) {               // Lyrics button, only when this release has published lyrics
+      var lyr = el('div', 'ozi-lyr'); root.appendChild(lyr);
+      window.OZLyrics.attach({ row: row, buttonHost: lyr, panel: root, theme: 'light' });
     }
 
     if (SHOW.date && s.date) meta('Release Date', s.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }));
