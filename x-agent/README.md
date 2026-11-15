@@ -37,7 +37,7 @@ Until all four X secrets exist, the agent runs in **test mode**: drafts, revisio
 
 ## Try it now
 
-**Actions → X draft → Run workflow** opens a draft right away.
+**Actions → X draft → Run workflow** opens a draft right away. Fill in **song** to draft that song instead of the rotation's pick, and tick **replace** to close a waiting draft (nothing posted) and draft yours. The admin app's X Posts screen does the same with the Draft button in Song rotation.
 
 ## Tuning
 

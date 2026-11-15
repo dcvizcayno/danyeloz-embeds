@@ -8,6 +8,14 @@ on:
         description: 'Open a draft even if one is already waiting'
         type: boolean
         default: false
+      song:
+        description: 'Song title to draft (blank: the rotation picks)'
+        type: string
+        default: ''
+      replace:
+        description: 'With a song picked: close the waiting draft and draft this one instead'
+        type: boolean
+        default: false
 permissions:
   issues: write
   contents: read
@@ -20,6 +28,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCE: ${{ inputs.force && '1' || '' }}
+          SONG: ${{ inputs.song }}
+          REPLACE: ${{ inputs.replace && '1' || '' }}
           X_API_KEY: ${{ secrets.X_API_KEY }}
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}

@@ -287,9 +287,13 @@ def x_metrics(ids):
 
 # ---------- approval issue ----------
 def issue_body(d):
-    meta = json.dumps({k: d[k] for k in ('song', 'hook', 'link', 'version')})
+    meta = {k: d[k] for k in ('song', 'hook', 'link', 'version')}
+    if d.get('picked'):
+        meta['picked'] = True
+    meta = json.dumps(meta)
     mode = '\n> 🧪 **Test mode:** X keys are not set yet, so ticking Post logs it without posting.\n' if TEST_MODE else ''
-    return f"""**Song:** {d['song']}  ·  **Approach:** {d['hook']}  ·  **Link:** {d['link']}  ·  **Version:** {d['version']}
+    picked = '  ·  **Your pick**' if d.get('picked') else ''
+    return f"""**Song:** {d['song']}  ·  **Approach:** {d['hook']}  ·  **Link:** {d['link']}  ·  **Version:** {d['version']}{picked}
 {mode}
 ### Draft post
 {MARK_START}
@@ -318,18 +322,34 @@ def parse_issue(body):
 def cmd_draft():
     log = load(LOG_PATH, [])
     playbook = load(PLAYBOOK_PATH, {})
+    # SONG: Daniel picked this song (admin app or the Run workflow form). Blank: the rotation picks.
+    # REPLACE: with a picked song, close the waiting draft instead of stopping.
+    wanted = os.environ.get('SONG', '').strip()
+    replace = bool(wanted and os.environ.get('REPLACE'))
     open_drafts = gh('GET', f'/repos/{REPO}/issues?labels=x-draft&state=open')
-    if open_drafts and not os.environ.get('FORCE'):
+    if open_drafts and not os.environ.get('FORCE') and not replace:
         print('A draft is already waiting for you; not opening another.')
         return
     pool = songs()
     if not pool:
         raise SystemExit('No songs with a bandcamp_embed.')
-    song = pick_song(pool, log)
+    if wanted:
+        song = next((s for s in pool if s['title'].casefold() == wanted.casefold()), None)
+        if not song:
+            raise SystemExit(f'No song with a Bandcamp code is called "{wanted}". Check the title in the Song Database.')
+    else:
+        song = pick_song(pool, log)
+    if replace:
+        for old in open_drafts:
+            gh('POST', f'/repos/{REPO}/issues/{old["number"]}/comments',
+               {'body': f'Replaced by your pick: {song["title"]}. Nothing was posted from this draft.'})
+            gh('PATCH', f'/repos/{REPO}/issues/{old["number"]}',
+               {'state': 'closed', 'state_reason': 'not_planned', 'labels': ['x-replaced']})
     hook, link = choose(playbook, 'hook'), choose(playbook, 'link')
     if link == 'youtube' and not song['youtube']:
         link = 'bandcamp'
-    d = {'song': song['title'], 'hook': hook, 'link': link, 'version': 1, 'text': write_post(song, hook, link)}
+    d = {'song': song['title'], 'hook': hook, 'link': link, 'version': 1, 'text': write_post(song, hook, link),
+         'picked': bool(wanted)}
     issue = gh('POST', f'/repos/{REPO}/issues', {
         'title': f'X draft: {song["title"]}', 'body': issue_body(d),
         'labels': ['x-draft'], 'assignees': [OWNER]})
@@ -354,7 +374,8 @@ def cmd_handle():
         log.append({'id': res['id'], 'song': meta['song'], 'hook': meta['hook'], 'link': meta['link'],
                     'text': text, 'posted_at': now.isoformat(timespec='minutes'), 'hour': now.hour,
                     'weekday': now.strftime('%a'), 'revisions': meta['version'] - 1,
-                    'status': 'posted', 'test': bool(res.get('test')), 'metrics': {}, 'score': None})
+                    'status': 'posted', 'test': bool(res.get('test')), 'metrics': {}, 'score': None,
+                    'picked': bool(meta.get('picked'))})
         save(LOG_PATH, log)
         link = '' if res.get('test') else f'\n\nhttps://x.com/i/web/status/{res["id"]}'
         msg = ('🧪 Test mode: logged as posted, nothing went to X.' if res.get('test') else '✅ Posted to X.') + link
