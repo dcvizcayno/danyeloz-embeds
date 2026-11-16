@@ -11,8 +11,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 23,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 0,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 0
+    },
+    "score": 0.0
   },
   {
     "id": "2119951440143659113",
@@ -28,8 +38,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 19,
+      "like_count": 2,
+      "quote_count": 0,
+      "reply_count": 1,
+      "retweet_count": 1,
+      "engagements": 7,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 1
+    },
+    "score": 368.42
   },
   {
     "id": "2119977736408059946",
@@ -43,8 +63,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 7,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 0,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 0
+    },
+    "score": 0.0
   },
   {
     "id": "2120870011862491146",
@@ -58,8 +88,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 19,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 0,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 0
+    },
+    "score": 0.0
   },
   {
     "id": "2121992583278674050",
@@ -73,8 +113,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 8,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 0,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 0
+    },
+    "score": 0.0
   },
   {
     "id": "2122079239335817513",
@@ -90,8 +140,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 6,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 2,
+      "url_link_clicks": 1,
+      "user_profile_clicks": 0
+    },
+    "score": 333.33
   },
   {
     "id": "2122141552034418810",
@@ -105,8 +165,18 @@
     "revisions": 0,
     "status": "posted",
     "test": false,
-    "metrics": {},
-    "score": null,
+    "metrics": {
+      "bookmark_count": 0,
+      "impression_count": 1,
+      "like_count": 0,
+      "quote_count": 0,
+      "reply_count": 0,
+      "retweet_count": 0,
+      "engagements": 0,
+      "url_link_clicks": 0,
+      "user_profile_clicks": 0
+    },
+    "score": 0.0,
     "picked": true
   }
 ]
