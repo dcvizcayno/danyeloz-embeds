@@ -195,5 +195,21 @@
     "test": false,
     "metrics": {},
     "score": null
+  },
+  {
+    "id": "2122683440617377842",
+    "song": "Blue and Red Christmas",
+    "hook": "invite",
+    "link": "bandcamp",
+    "text": "If today feels heavy, \"Blue and Red Christmas\" might sit with you for a bit.\nhttps://danyeloz.bandcamp.com/album/blue-and-red-christmas\n\nWant more? Check my Official Site https://www.danyeloz.info/home",
+    "posted_at": "2026-11-17T21:29+08:00",
+    "hour": 21,
+    "weekday": "Tue",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null,
+    "picked": true
   }
 ]
