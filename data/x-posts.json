@@ -228,5 +228,21 @@
     "test": false,
     "metrics": {},
     "score": null
+  },
+  {
+    "id": "2122931772799304159",
+    "song": "THIS CHRISTMAS, LET IT BE LOVE",
+    "hook": "behind",
+    "link": "bandcamp",
+    "text": "From the Danyel OZ catalog: \"THIS CHRISTMAS, LET IT BE LOVE\", ep, pop. Press play and tell me what it felt like.\nhttps://danyeloz.bandcamp.com/album/this-christmas-let-it-be-love\n\nWant more? Check my Official Site https://www.danyeloz.info/home",
+    "posted_at": "2026-11-18T13:55+08:00",
+    "hour": 13,
+    "weekday": "Wed",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null,
+    "picked": true
   }
 ]
