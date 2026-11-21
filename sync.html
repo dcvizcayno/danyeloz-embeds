@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Sync licensing</title>
+</head>
+<body>
+<!-- Danyel OZ: Sync licensing catalogue
+     Google Sites: Insert > Embed > By URL: https://dcvizcayno.github.io/danyeloz-embeds/sync.html
+     Songs and their sync details come from the admin app (Tracks screen, Sync fields). Rights, contact and turnaround
+     come from the sync_settings tab. Only released songs show. Nothing on this page reads the page address. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; }
+  #sy { --red: #e3122a; --deep: #b0101f; font-family: 'Oswald', 'Arial Narrow', sans-serif; color: #111; overflow-wrap: anywhere; }
+  #sy * { box-sizing: border-box; }
+  #sy button, #sy select, #sy input { font-family: inherit; color: inherit; }
+  #sy a { color: inherit; }
+
+  .sy-hero { background: #0a0506; color: #fff; padding: 40px 32px 34px; }
+  .sy-script { font-family: 'Great Vibes', cursive; font-size: 38px; line-height: 1; color: #ffd9dd; }
+  .sy-h { margin: 6px 0 14px; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 64px; line-height: .95; letter-spacing: 1px; text-transform: uppercase; }
+  .sy-lead { margin: 0 0 18px; font-size: 20px; line-height: 1.45; font-weight: 300; color: #ffe8ea; max-width: 680px; }
+  .sy-rights { margin: 0 0 22px; padding: 14px 16px; border-left: 4px solid var(--red); background: rgba(255,255,255,.06);
+    font-family: 'Open Sans', Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #f1e8e9; max-width: 720px; }
+  .sy-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sy-btn { display: inline-block; text-decoration: none; padding: 12px 18px; font-size: 13px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,.6); color: #fff !important; background: transparent; cursor: pointer; }
+  .sy-btn:hover, .sy-btn:focus-visible { background: #fff; color: #0a0506 !important; outline: none; }
+  .sy-btn.solid { background: var(--red); border-color: var(--red); font-weight: 600; }
+  .sy-btn.solid:hover, .sy-btn.solid:focus-visible { background: #fff; border-color: #fff; }
+
+  .sy-filters { padding: 24px 4px 8px; border-bottom: 1px solid #ece7e7; }
+  .sy-grid-f { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr)); gap: 12px; }
+  .sy-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .sy-field span, .sy-has-l { font-size: 11px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; color: var(--deep); }
+  .sy-field select, .sy-field input { width: 100%; min-width: 0; padding: 9px 10px; font-size: 14px; border: 1px solid #111; background: #fff; border-radius: 0; }
+  .sy-field input { font-family: 'Open Sans', Arial, sans-serif; }
+  .sy-field select:focus, .sy-field input:focus { outline: 2px solid var(--red); outline-offset: 1px; }
+  .sy-has { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+  .sy-chip { border: 1px solid #111; background: #fff; padding: 7px 12px; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+  .sy-chip[aria-pressed="true"] { background: #111; color: #fff; }
+  .sy-chip:hover, .sy-chip:focus-visible { border-color: var(--red); background: var(--red); color: #fff; outline: none; }
+  .sy-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+  .sy-count { font-size: 12px; letter-spacing: 2.5px; color: var(--deep); text-transform: uppercase; }
+  .sy-clear { background: none; border: 0; padding: 4px 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration: underline; cursor: pointer; }
+  .sy-clear:hover, .sy-clear:focus-visible { color: var(--red); outline: none; }
+
+  .sy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 28px 22px; padding: 26px 4px 8px; }
+  .sy-card { display: flex; flex-direction: column; min-width: 0; }
+  .sy-cv { position: relative; width: 100%; aspect-ratio: 1; background: #1a0d0f; box-shadow: 0 18px 40px -22px rgba(0,0,0,.6); overflow: hidden; }
+  .sy-cv img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sy-cv .sy-nocv { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 18px; text-align: center;
+    color: #fff; font-family: 'Great Vibes', cursive; font-size: 30px; line-height: 1.1; background: linear-gradient(135deg, #0a0506, var(--deep)); }
+  .sy-line { height: 4px; width: 56px; margin: 16px 0 10px; background: var(--red); }
+  .sy-ct { margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 24px; line-height: 1.05; text-transform: uppercase; }
+  .sy-cm { font-size: 12px; letter-spacing: 2px; color: #555; margin-top: 6px; text-transform: uppercase; }
+  .sy-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .sy-tag { padding: 4px 9px; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; border: 1px solid #111; }
+  .sy-tag.mood { border-color: var(--red); color: var(--deep); }
+  .sy-tag.badge { background: #111; color: #fff; border-color: #111; }
+  .sy-tag.exp { background: var(--red); color: #fff; border-color: var(--red); }
+  .sy-listen { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #555; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .sy-listen a { color: #111; text-decoration: none; border-bottom: 1px solid #111; }
+  .sy-listen a:hover, .sy-listen a:focus-visible { color: var(--red); border-color: var(--red); outline: none; }
+  .sy-req { margin-top: 14px; align-self: flex-start; text-decoration: none; padding: 10px 14px; font-size: 12px; font-weight: 500; letter-spacing: 2.5px;
+    text-transform: uppercase; border: 1px solid #111; color: #111 !important; }
+  .sy-req:hover, .sy-req:focus-visible { background: var(--red); border-color: var(--red); color: #fff !important; outline: none; }
+
+  .sy-msg { font-family: 'Open Sans', Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #555; padding: 26px 6px; }
+  .sy-msg[hidden] { display: none; }
+  .sy-note { margin: 10px 4px 0; font-family: 'Great Vibes', cursive; font-size: 28px; color: var(--deep); }
+  .sy-how { margin-top: 36px; background: var(--red); color: #fff; padding: 32px; }
+  .sy-how h2 { margin: 0 0 12px; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 34px; text-transform: uppercase; letter-spacing: .5px; }
+  .sy-how p { margin: 0 0 18px; font-family: 'Open Sans', Arial, sans-serif; font-size: 15px; line-height: 1.7; max-width: 720px; }
+  .sy-how .sy-btn.solid { background: #fff; border-color: #fff; color: #0a0506 !important; }
+  .sy-how .sy-btn.solid:hover, .sy-how .sy-btn.solid:focus-visible { background: #0a0506; border-color: #0a0506; color: #fff !important; }
+
+  @media (max-width: 760px) {
+    .sy-hero, .sy-how { padding: 26px 18px; }
+    .sy-h { font-size: 42px; }
+    .sy-lead { font-size: 17px; }
+    .sy-how h2 { font-size: 28px; }
+  }
+</style>
+
+<div id="sy"><p class="sy-msg">Loading…</p></div>
+
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/sync-core.js"></script>
+<script>
+(function () {
+  /* ================= Settings ================= */
+  var SCRIPT    = 'Sync licensing';
+  var HEADING   = 'Songs for your picture';
+  var INTRO     = 'For music supervisors, editors and producers: original songs by Danyel OZ, ready to license for film, TV, ads, games and online video. Filter by mood, tempo or key, listen, and send a request.';
+  var OTHER     = 'Other versions (TV mix, a cappella) on request.';
+  var ONE_SHEET = 'https://dcvizcayno.github.io/danyeloz-embeds/sync-one-sheet.html';
+  var FALLBACK  = 'The song list is being updated right now. Send a request and you will get the current catalogue, with details for each song.';
+  var EMPTY     = 'No songs match these filters. Try fewer filters, or send a request: the right song may still be on its way.';
+  /* ============================================ */
+
+  var root = document.getElementById('sy');
+  var S = window.OZSync;
+  if (!S) { root.firstChild.textContent = FALLBACK; return; }
+  var el = S.el;
+
+  function link(href, cls, text) {
+    var a = el('a', cls, text);
+    a.href = href;
+    if (href.indexOf('mailto:') !== 0) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    return a;
+  }
+  function requestLink(settings, title, cls, text) {
+    var href = S.contactHref(settings, title);
+    return href ? link(href, cls, text) : null;
+  }
+
+  function hero(settings) {
+    var h = el('section', 'sy-hero');
+    h.appendChild(el('div', 'sy-script', SCRIPT));
+    h.appendChild(el('h1', 'sy-h', HEADING));
+    h.appendChild(el('p', 'sy-lead', INTRO));
+    h.appendChild(el('p', 'sy-rights', S.rightsText(settings)));
+    var btns = el('div', 'sy-btns');
+    var req = requestLink(settings, 'Danyel OZ catalogue', 'sy-btn solid', 'Request a license');
+    if (req) btns.appendChild(req);
+    var sheet = S.safeLink(ONE_SHEET);
+    if (sheet) btns.appendChild(link(sheet, 'sy-btn', 'Get the one-sheet'));
+    h.appendChild(btns);
+    return h;
+  }
+
+  function how(settings) {
+    var b = el('section', 'sy-how');
+    b.appendChild(el('h2', null, 'How licensing works'));
+    b.appendChild(el('p', null, S.processText(settings)));
+    var btns = el('div', 'sy-btns');
+    var req = requestLink(settings, 'Danyel OZ catalogue', 'sy-btn solid', 'Request a license');
+    if (req) btns.appendChild(req);
+    var sheet = S.safeLink(ONE_SHEET);
+    if (sheet) btns.appendChild(link(sheet, 'sy-btn', 'Get the one-sheet'));
+    b.appendChild(btns);
+    return b;
+  }
+
+  function cover(s) {
+    var box = el('div', 'sy-cv');
+    var none = el('div', 'sy-nocv', s.title);
+    if (s.cover) {
+      var img = document.createElement('img');
+      img.referrerPolicy = 'no-referrer';
+      img.setAttribute('referrerpolicy', 'no-referrer');
+      img.loading = 'lazy';
+      img.alt = s.title + ' cover';
+      img.addEventListener('error', function () { if (img.parentNode) box.replaceChild(none, img); });
+      img.src = s.cover;
+      box.appendChild(img);
+    } else box.appendChild(none);
+    return box;
+  }
+
+  var LISTEN = [['spotify', 'Spotify'], ['apple', 'Apple Music'], ['youtube', 'YouTube'], ['bandcamp', 'Bandcamp']];
+
+  function card(s, settings) {
+    var c = el('article', 'sy-card');
+    c.appendChild(cover(s));
+    c.appendChild(el('div', 'sy-line'));
+    c.appendChild(el('h3', 'sy-ct', s.title));
+    var meta = [];
+    if (s.bpm != null) meta.push(s.bpm + ' BPM');
+    if (s.key) meta.push(s.key);
+    if (s.vocal) meta.push(s.vocal);
+    if (s.language) meta.push(s.language);
+    if (meta.length) c.appendChild(el('div', 'sy-cm', meta.join(' · ')));
+    var tags = el('div', 'sy-tags');
+    s.moods.forEach(function (m) { tags.appendChild(el('span', 'sy-tag mood', m)); });
+    if (s.genre) tags.appendChild(el('span', 'sy-tag', s.genre));
+    if (s.genre2) tags.appendChild(el('span', 'sy-tag', s.genre2));
+    tags.appendChild(el('span', s.explicit ? 'sy-tag exp' : 'sy-tag', s.explicit ? 'Explicit' : 'Not explicit'));
+    s.badges.forEach(function (b) { tags.appendChild(el('span', 'sy-tag badge', b)); });
+    c.appendChild(tags);
+    var heard = LISTEN.filter(function (l) { return s.links[l[0]]; });
+    if (heard.length) {
+      var row = el('div', 'sy-listen');
+      row.appendChild(el('span', null, 'Listen:'));
+      heard.forEach(function (l) { row.appendChild(link(s.links[l[0]], null, l[1])); });
+      c.appendChild(row);
+    }
+    var req = requestLink(settings, s.title, 'sy-req', 'Request a license');
+    if (req) c.appendChild(req);
+    return c;
+  }
+
+  function present(list, songs, pick) {
+    return list.filter(function (v) { return songs.some(function (s) { return pick(s).indexOf(v) >= 0; }); });
+  }
+
+  function select(name, label, values, anyText) {
+    var f = el('label', 'sy-field');
+    f.appendChild(el('span', null, label));
+    var sel = document.createElement('select');
+    sel.setAttribute('data-f', name);
+    var any = el('option', null, anyText); any.value = ''; sel.appendChild(any);
+    values.forEach(function (v) { var o = el('option', null, v); o.value = v; sel.appendChild(o); });
+    f.appendChild(sel);
+    return { field: f, input: sel };
+  }
+
+  function catalogue(songs, settings) {
+    var box = el('section', 'sy-cat');
+    var filters = el('div', 'sy-filters');
+    var grid = el('div', 'sy-grid-f');
+
+    var sf = el('label', 'sy-field');
+    sf.appendChild(el('span', null, 'Search'));
+    var q = document.createElement('input');
+    q.type = 'search'; q.maxLength = 100; q.placeholder = 'Title, mood, genre, writer'; q.setAttribute('data-f', 'q');
+    sf.appendChild(q);
+    grid.appendChild(sf);
+
+    var sels = [
+      select('mood', 'Mood', present(S.MOODS, songs, function (s) { return s.moods; }), 'Any mood'),
+      select('genre', 'Genre', present(S.GENRES, songs, function (s) { return [s.genre, s.genre2]; }), 'Any genre'),
+      select('tempo', 'Tempo', ['Slow', 'Medium', 'Fast'], 'Any tempo'),
+      select('key', 'Key', present(S.KEYS, songs, function (s) { return [s.key]; }), 'Any key'),
+      select('vocal', 'Vocal', present(S.VOCALS, songs, function (s) { return [s.vocal]; }), 'Any vocal')
+    ];
+    var tempoLabels = { Slow: 'Slow (under 90 BPM)', Medium: 'Medium (90 to 120 BPM)', Fast: 'Fast (over 120 BPM)' };
+    Array.prototype.forEach.call(sels[2].input.options, function (o) { if (tempoLabels[o.value]) o.textContent = tempoLabels[o.value]; });
+    sels.forEach(function (s) { grid.appendChild(s.field); });
+    filters.appendChild(grid);
+
+    var hasRow = el('div', 'sy-has');
+    hasRow.appendChild(el('span', 'sy-has-l', 'Available:'));
+    var chips = S.BADGES.map(function (b) {
+      var c = el('button', 'sy-chip', b[1]);
+      c.type = 'button'; c.setAttribute('aria-pressed', 'false'); c.setAttribute('data-has', b[0]);
+      hasRow.appendChild(c);
+      return c;
+    });
+    filters.appendChild(hasRow);
+
+    var bar = el('div', 'sy-bar');
+    var count = el('div', 'sy-count');
+    count.setAttribute('aria-live', 'polite');
+    var clear = el('button', 'sy-clear', 'Clear filters');
+    clear.type = 'button';
+    bar.appendChild(count); bar.appendChild(clear);
+    filters.appendChild(bar);
+    box.appendChild(filters);
+
+    var list = el('div', 'sy-list');
+    var empty = el('p', 'sy-msg sy-empty', EMPTY);
+    empty.hidden = true;
+    box.appendChild(list);
+    box.appendChild(empty);
+    box.appendChild(el('p', 'sy-note', OTHER));
+
+    function draw() {
+      var f = { q: q.value, has: [] };
+      sels.forEach(function (s) { f[s.input.getAttribute('data-f')] = s.input.value; });
+      chips.forEach(function (c) { if (c.getAttribute('aria-pressed') === 'true') f.has.push(c.getAttribute('data-has')); });
+      var shown = S.filter(songs, f);
+      while (list.firstChild) list.removeChild(list.firstChild);
+      shown.forEach(function (s) { list.appendChild(card(s, settings)); });
+      count.textContent = shown.length === songs.length
+        ? songs.length + (songs.length === 1 ? ' song' : ' songs')
+        : shown.length + ' of ' + songs.length + ' songs';
+      empty.hidden = shown.length > 0;
+    }
+    q.addEventListener('input', draw);
+    sels.forEach(function (s) { s.input.addEventListener('change', draw); });
+    chips.forEach(function (c) {
+      c.addEventListener('click', function () { c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); draw(); });
+    });
+    clear.addEventListener('click', function () {
+      q.value = '';
+      sels.forEach(function (s) { s.input.value = ''; });
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
+      draw();
+    });
+    draw();
+    return box;
+  }
+
+  function render(data) {
+    while (root.firstChild) root.removeChild(root.firstChild);
+    var settings = data.settings || S.settings(null);
+    root.appendChild(hero(settings));
+    if (data.ok && data.songs.length) root.appendChild(catalogue(data.songs, settings));
+    else {
+      root.appendChild(el('p', 'sy-msg sy-fallback', FALLBACK));
+      root.appendChild(el('p', 'sy-note', OTHER));
+    }
+    root.appendChild(how(settings));
+  }
+
+  S.load().then(render).catch(function () { render({ ok: false, songs: [], settings: S.settings(null) }); });
+})();
+</script>
+</body>
+</html>

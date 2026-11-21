@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danyel OZ: Sync One-Sheet</title>
+</head>
+<body>
+<!-- Danyel OZ: Sync one-sheet for music supervisors
+     URL: https://dcvizcayno.github.io/danyeloz-embeds/sync-one-sheet.html
+     Prints to one A4 or Letter page (browser Print, then Save as PDF). Rights wording, contact and songs come from
+     the Song Database through sync-core.js (sync_settings tab and the Sync tab in the admin app). Songs: released
+     featured songs, newest first, up to 10; fewer than 8 are topped up with the newest complete songs.
+     No URL parameter changes anything on this page. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; }
+  #os { --red: #e3122a; --deep: #b0101f; font-family: 'Open Sans', Arial, sans-serif; color: #111; max-width: 1040px; margin: 0 auto; }
+  #os * { box-sizing: border-box; }
+  #os a { color: inherit; }
+  .os-top { background: #0a0506; color: #fff; padding: 32px 32px 26px; border-bottom: 4px solid var(--red); }
+  .os-name { margin: 0; font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 60px; line-height: .95; letter-spacing: 1px; text-transform: uppercase; }
+  .os-desc { margin: 10px 0 0; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-size: 15px; font-weight: 400; letter-spacing: 2.5px; text-transform: uppercase; color: #ffe8ea; }
+  .os-body { padding: 22px 28px 8px; }
+  .os-rights { margin: 0 0 14px; padding: 12px 16px; border-left: 4px solid var(--red); background: #faf6f6; font-size: 15px; line-height: 1.55; font-weight: 600; }
+  .os-contact { margin: 0 0 14px; font-size: 14px; line-height: 1.6; }
+  .os-contact b { font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; color: var(--deep); margin-right: 6px; }
+  .os-contact a { overflow-wrap: anywhere; }
+  .os-bio { margin: 0 0 18px; font-size: 14px; line-height: 1.65; color: #333; max-width: 760px; }
+  .os-h { margin: 0 0 8px; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--deep); }
+  .os-table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.35; }
+  .os-table th { text-align: left; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-weight: 500; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    border-bottom: 2px solid #111; padding: 6px 6px; }
+  .os-table td { border-bottom: 1px solid #ece7e7; padding: 7px 6px; vertical-align: top; overflow-wrap: anywhere; }
+  .os-table td.t { font-weight: 600; }
+  .os-table .sm { display: block; font-size: 11px; color: #666; }
+  .os-table a { text-decoration: none; border-bottom: 1px solid var(--red); }
+  .os-msg { font-size: 15px; color: #555; padding: 16px 0; }
+  .os-foot { margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid #ece7e7; font-size: 13px; line-height: 1.55; color: #333; }
+  .os-hint { padding: 0 28px 24px; font-size: 12px; color: #777; }
+  @media screen and (max-width: 680px) {
+    .os-top { padding: 24px 18px 20px; }
+    .os-name { font-size: 42px; }
+    .os-body { padding: 18px 14px 6px; }
+    .os-hint { padding: 0 14px 18px; }
+    .os-table, .os-table tbody, .os-table tr, .os-table td { display: block; width: 100%; }
+    .os-table thead { display: none; }
+    .os-table tr { border-bottom: 1px solid #ddd; padding: 8px 0; }
+    .os-table td { border: 0; padding: 2px 0; }
+    .os-table td.t { font-size: 15px; }
+    .os-table td[data-l]:not(.t)::before { content: attr(data-l) ": "; font-family: 'Oswald', 'Arial Narrow', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--deep); }
+    .os-table .sm { display: inline; margin-left: 6px; }
+  }
+  @page { size: auto; margin: 12mm 12mm 12mm 12mm; }
+  @media print {
+    html, body { background: #fff !important; }
+    #os { max-width: none; color: #000; }
+    #os * { color: #000 !important; background: transparent !important; box-shadow: none !important; }
+    .os-top { padding: 0 0 6pt; border-bottom: 1.5pt solid #000; }
+    .os-name { font-size: 26pt; }
+    .os-desc { margin-top: 4pt; font-size: 9pt; letter-spacing: 1.5pt; }
+    .os-body { padding: 8pt 0 0; }
+    .os-rights { margin: 0 0 7pt; padding: 0 0 0 7pt; border-left: 2pt solid #000; font-size: 9.5pt; line-height: 1.4; }
+    .os-contact { margin: 0 0 6pt; font-size: 9pt; line-height: 1.45; }
+    .os-contact b { font-size: 8pt; }
+    .os-bio { margin: 0 0 8pt; font-size: 9pt; line-height: 1.45; max-width: none; }
+    .os-h { font-size: 8.5pt; margin-bottom: 3pt; }
+    .os-table { font-size: 8pt; line-height: 1.25; }
+    .os-table th { font-size: 7pt; padding: 2pt 3pt; border-bottom: 1pt solid #000; }
+    .os-table td { padding: 3pt 3pt; border-bottom: .5pt solid #999; }
+    .os-table td.t { width: 30%; }
+    .os-table .sm { font-size: 7pt; }
+    .os-table a { border-bottom: 0; text-decoration: underline; }
+    .os-table tr { break-inside: avoid; }
+    .os-foot { margin-top: 7pt; padding-top: 5pt; border-top: .5pt solid #000; font-size: 8.5pt; line-height: 1.4; }
+    .os-hint { display: none; }
+  }
+</style>
+<div id="os"><p class="os-msg">Loading…</p></div>
+<script src="https://dcvizcayno.github.io/danyeloz-embeds/sync-core.js"></script>
+<script>
+(function () {
+  var root = document.getElementById('os');
+  var CATALOGUE = 'https://dcvizcayno.github.io/danyeloz-embeds/sync.html';
+  var DESC = 'Singer-songwriter from Manila · Alt-pop, R&B, acoustic · English, Spanish, French';
+  var BIO = 'Danyel OZ is an independent singer-songwriter from Manila who writes and releases alt-pop, R&B and acoustic songs. ' +
+    'Most songs are in English, with some in Spanish and French. A new song comes out about every two weeks.';
+  var FALLBACK = 'The song list is not available right now. Email for the current catalogue.';
+
+  function t(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  // No sync-core.js: plain text only, nothing from data.
+  if (!window.OZSync) { root.textContent = ''; root.appendChild(t('p', 'os-msg', 'This page could not load. Please try again later.')); return; }
+  var Z = window.OZSync;
+
+  function link(href, text, external) {
+    var a = Z.el('a', '', text);
+    if (!href) return Z.el('span', '', text);
+    a.setAttribute('href', href);
+    if (external) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
+    return a;
+  }
+
+  function cell(label, text, cls, small) {
+    var td = Z.el('td', cls || '', text);
+    td.setAttribute('data-l', label);
+    if (small) td.appendChild(Z.el('span', 'sm', small));
+    return td;
+  }
+
+  function table(rows) {
+    var tb = Z.el('table', 'os-table'), head = Z.el('thead'), hr = Z.el('tr'), body = Z.el('tbody');
+    ['Title', 'Time', 'Mood', 'Genre', 'BPM', 'Key', 'Vocal', 'Explicit', 'Available', 'Listen'].forEach(function (h) { hr.appendChild(Z.el('th', '', h)); });
+    head.appendChild(hr); tb.appendChild(head); tb.appendChild(body);
+    rows.forEach(function (s) {
+      var tr = Z.el('tr');
+      tr.appendChild(cell('Title', s.title, 't'));
+      tr.appendChild(cell('Time', s.duration));
+      tr.appendChild(cell('Mood', s.moods.slice(0, 2).join(', ')));
+      tr.appendChild(cell('Genre', s.genre + (s.genre2 ? ' / ' + s.genre2 : '')));
+      tr.appendChild(cell('BPM', s.bpm == null ? '' : String(s.bpm)));
+      tr.appendChild(cell('Key', s.key));
+      tr.appendChild(cell('Vocal', s.vocal, '', s.language));
+      tr.appendChild(cell('Explicit', s.explicit ? 'Yes' : 'No'));
+      tr.appendChild(cell('Available', s.badges.join(', ')));
+      var td = cell('Listen', '');
+      var href = Z.safeLink(s.listen);
+      if (href) td.appendChild(link(href, 'Listen', true));
+      tr.appendChild(td);
+      body.appendChild(tr);
+    });
+    return tb;
+  }
+
+  function render(res) {
+    var st = res.settings || Z.settings(null);
+    root.textContent = '';
+    var top = Z.el('header', 'os-top');
+    top.appendChild(Z.el('h1', 'os-name', 'Danyel OZ'));
+    top.appendChild(Z.el('p', 'os-desc', DESC));
+    root.appendChild(top);
+
+    var body = Z.el('div', 'os-body');
+    body.appendChild(Z.el('p', 'os-rights', Z.rightsText(st)));
+
+    var c = Z.el('p', 'os-contact');
+    c.appendChild(Z.el('b', '', 'Licensing'));
+    var href = Z.contactHref(st, 'Sync catalogue');
+    var isMail = href.indexOf('mailto:') === 0;
+    c.appendChild(link(href, isMail ? st.contact_email : st.contact_email || href, !isMail));
+    c.appendChild(document.createTextNode('. Reply within ' + st.turnaround + '.'));
+    c.appendChild(Z.el('br'));
+    c.appendChild(Z.el('b', '', 'Catalogue'));
+    var cat = Z.safeLink(CATALOGUE);
+    c.appendChild(link(cat, cat.replace(/^https:\/\//, ''), true));
+    body.appendChild(c);
+
+    body.appendChild(Z.el('p', 'os-bio', BIO));
+    body.appendChild(Z.el('h2', 'os-h', 'Songs for sync'));
+    var rows = res.ok ? Z.pickOneSheet(res.songs || []) : [];
+    if (rows.length) body.appendChild(table(rows));
+    else body.appendChild(Z.el('p', 'os-msg', FALLBACK));
+
+    body.appendChild(Z.el('p', 'os-foot', 'Files on request: WAV, instrumental, clean, stems and 60 s or 30 s cutdowns where available. ' +
+      'Send the song, your project, the media, the territory and the term, and you get a quote within ' + st.turnaround + '.'));
+    root.appendChild(body);
+    root.appendChild(Z.el('p', 'os-hint', 'To save this page as a PDF, use your browser’s Print and choose Save as PDF.'));
+  }
+
+  Z.load().then(render, function () { render({ ok: false, songs: [], settings: Z.settings(null) }); });
+})();
+</script>
+</body>
+</html>
