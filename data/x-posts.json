@@ -260,5 +260,21 @@
     "metrics": {},
     "score": null,
     "picked": true
+  },
+  {
+    "id": "2124180014845288551",
+    "song": "Jackpot",
+    "hook": "question",
+    "link": "bandcamp",
+    "text": "Ever held on to something long after it was over? \"Jackpot\" lives in that space.\nhttps://danyeloz.bandcamp.com/track/jackpot\n\nSpotify: https://open.spotify.com/album/6amlXpiMjn26MyojnziB67?si=b95f1cc878b741bc\n\nWant more? Check my Official Site https://www.danyeloz.info/home",
+    "posted_at": "2026-11-22T00:35+08:00",
+    "hour": 0,
+    "weekday": "Sun",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null,
+    "picked": false
   }
 ]
