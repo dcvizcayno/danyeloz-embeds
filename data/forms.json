@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "forms": {
+    "contact": {
+      "action": "https://docs.google.com/forms/d/e/1FAIpQLSdEEygbesj8Wl0nnxCqK24Uge2jAqGf1RomOxzANeL4UaTDfQ/formResponse",
+      "fields": {
+        "first_name": "entry.1360424145",
+        "last_name": "entry.2004628744",
+        "email": "entry.997490620",
+        "topic": "entry.1034073527",
+        "subject": "entry.1281952593",
+        "message": "entry.1369949054"
+      }
+    },
+    "sync": {
+      "action": "https://docs.google.com/forms/d/e/1FAIpQLSdEMc3DBhgVDYP6VfXWGFCVX3cGrEzdabirpA7HSyEylGi3Ng/formResponse",
+      "fields": {
+        "name": "entry.1459725726",
+        "email": "entry.838499474",
+        "company": "entry.192206687",
+        "songs": "entry.1944122467",
+        "project": "entry.193013831",
+        "media": "entry.1766039740",
+        "territory": "entry.2128907418",
+        "term": "entry.1585158371",
+        "timeline": "entry.1047769657",
+        "budget": "entry.1570011304",
+        "notes": "entry.1494905033"
+      }
+    }
+  }
+}
