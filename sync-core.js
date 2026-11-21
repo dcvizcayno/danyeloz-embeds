@@ -121,13 +121,16 @@
     if (/%2e/i.test(raw) || /(^|\/)\.\.?(\/|$)/.test(raw)) return '';
     return p.hostname === 'docs.google.com' && p.pathname.indexOf('/forms/') !== 0 ? '' : ok;
   }
-  // Request link: contact_url (D-10 hosts) first, else mailto for a valid email with only an encoded subject.
-  function contactHref(s, title) {
-    s = s || {};
-    var url = contactUrl(s.contact_url); if (url) return url;
-    var email = str(s.contact_email);
+  // Mailto for a valid email with only an encoded subject. '' when the email is not valid.
+  function mailtoHref(s, title) {
+    var email = str((s || {}).contact_email);
     if (!validEmail(email)) return '';
     return 'mailto:' + email + '?subject=' + encodeURIComponent('License request: ' + str(title));
+  }
+  // Request link: contact_url (D-10 hosts) first, else the mailto above.
+  function contactHref(s, title) {
+    s = s || {};
+    return contactUrl(s.contact_url) || mailtoHref(s, title);
   }
 
   /* ---------- settings and wording ---------- */
@@ -230,13 +233,295 @@
     });
   }
 
+  /* ---------- request panel and one-sheet (shared by both pages; text-only DOM) ---------- */
+  // Google Sites shows embeds in a sandboxed frame: mailto and top navigation do nothing there, links can only open
+  // a new tab. So "Request a license" opens an in-page panel, and the one-sheet can be drawn inside the catalogue.
+  var CATALOGUE_URL = 'https://dcvizcayno.github.io/danyeloz-embeds/sync.html';
+  var ONE_SHEET_URL = 'https://dcvizcayno.github.io/danyeloz-embeds/sync-one-sheet.html';
+  var GENERAL_SUBJECT = 'Danyel OZ catalogue';
+  var INCLUDE = ['The song', 'Your project (title and a short description)', 'The media (film, TV, ad, game, online video)',
+    'The territory', 'The term', 'Your timeline'];
+  var OS_DESC = 'Singer-songwriter from Manila · Alt-pop, R&B, acoustic · English, Spanish, French';
+  var OS_BIO = 'Danyel OZ is an independent singer-songwriter from Manila who writes and releases alt-pop, R&B and acoustic songs. ' +
+    'Most songs are in English, with some in Spanish and French. A new song comes out about every two weeks.';
+  var OS_FALLBACK = 'The song list is not available right now. Email for the current catalogue.';
+  var CSS = [
+    '.ozr-back{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,5,6,.55);z-index:2147483000}',
+    '.ozr{position:absolute;z-index:2147483001;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:#fff;color:#111;' +
+      'border-top:4px solid #e3122a;box-shadow:0 24px 60px -20px rgba(0,0,0,.6);padding:22px 22px 18px;font-family:"Open Sans",Arial,sans-serif;' +
+      'font-size:15px;line-height:1.55;text-align:left;box-sizing:border-box;overflow-wrap:anywhere}',
+    '.ozr *{box-sizing:border-box}',
+    '.ozr-h{margin:0 0 10px;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;line-height:1.05;letter-spacing:.5px;text-transform:uppercase;outline:none}',
+    '.ozr p{margin:0 0 10px}',
+    '.ozr-song{font-weight:600}',
+    '.ozr-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px}',
+    '.ozr-mail{display:inline-block;font-weight:600;font-size:17px;padding:6px 10px;background:#faf6f6;border:1px solid #ece7e7;user-select:all;-webkit-user-select:all}',
+    '.ozr-status{min-height:1.4em;font-size:13px;color:#b0101f}',
+    '.ozr ul{margin:4px 0 12px;padding-left:20px}',
+    '.ozr-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}',
+    '.ozr-b{display:inline-block;padding:10px 14px;font-family:Oswald,"Arial Narrow",sans-serif;font-size:12px;font-weight:500;letter-spacing:2.5px;' +
+      'text-transform:uppercase;border:1px solid #111;background:#fff;color:#111;text-decoration:none;cursor:pointer;border-radius:0}',
+    '.ozr-b.solid{background:#e3122a;border-color:#e3122a;color:#fff}',
+    '.ozr-b:hover,.ozr-b:focus-visible{background:#111;border-color:#111;color:#fff;outline:2px solid #e3122a;outline-offset:2px}',
+    '#os{--red:#e3122a;--deep:#b0101f;font-family:"Open Sans",Arial,sans-serif;color:#111;max-width:1040px;margin:0 auto}',
+    '#os *{box-sizing:border-box}',
+    '#os a{color:inherit}',
+    '#os .os-top{background:#0a0506;color:#fff;padding:32px 32px 26px;border-bottom:4px solid var(--red)}',
+    '#os .os-name{margin:0;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:60px;line-height:.95;letter-spacing:1px;text-transform:uppercase}',
+    '#os .os-desc{margin:10px 0 0;font-family:Oswald,"Arial Narrow",sans-serif;font-size:15px;font-weight:400;letter-spacing:2.5px;text-transform:uppercase;color:#ffe8ea}',
+    '#os .os-body{padding:22px 28px 8px}',
+    '#os .os-rights{margin:0 0 14px;padding:12px 16px;border-left:4px solid var(--red);background:#faf6f6;font-size:15px;line-height:1.55;font-weight:600}',
+    '#os .os-contact{margin:0 0 14px;font-size:14px;line-height:1.6}',
+    '#os .os-contact b{font-family:Oswald,"Arial Narrow",sans-serif;font-weight:500;letter-spacing:2px;text-transform:uppercase;font-size:12px;color:var(--deep);margin-right:6px}',
+    '#os .os-contact a,#os .os-contact span{overflow-wrap:anywhere}',
+    '#os .os-req{margin-left:6px;padding:3px 9px;font-family:Oswald,"Arial Narrow",sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;' +
+      'border:1px solid #111;background:#fff;color:#111;cursor:pointer;border-radius:0}',
+    '#os .os-req:hover,#os .os-req:focus-visible{background:var(--red);border-color:var(--red);color:#fff;outline:none}',
+    '#os .os-bio{margin:0 0 18px;font-size:14px;line-height:1.65;color:#333;max-width:760px}',
+    '#os .os-h{margin:0 0 8px;font-family:Oswald,"Arial Narrow",sans-serif;font-weight:500;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--deep)}',
+    '#os .os-table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.35}',
+    '#os .os-table th{text-align:left;font-family:Oswald,"Arial Narrow",sans-serif;font-weight:500;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;border-bottom:2px solid #111;padding:6px 6px}',
+    '#os .os-table td{border-bottom:1px solid #ece7e7;padding:7px 6px;vertical-align:top;overflow-wrap:anywhere}',
+    '#os .os-table td.t{font-weight:600}',
+    '#os .os-table .sm{display:block;font-size:11px;color:#666}',
+    '#os .os-table a{text-decoration:none;border-bottom:1px solid var(--red)}',
+    '#os .os-msg{font-size:15px;color:#555;padding:16px 0}',
+    '#os .os-foot{margin:16px 0 0;padding:12px 0 0;border-top:1px solid #ece7e7;font-size:13px;line-height:1.55;color:#333}',
+    '#os .os-hint{padding:0 28px 24px;font-size:12px;color:#777}',
+    '@media screen and (max-width:680px){',
+    '#os .os-top{padding:24px 18px 20px}#os .os-name{font-size:42px}#os .os-body{padding:18px 14px 6px}#os .os-hint{padding:0 14px 18px}',
+    '#os .os-table,#os .os-table tbody,#os .os-table tr,#os .os-table td{display:block;width:100%}',
+    '#os .os-table thead{display:none}',
+    '#os .os-table tr{border-bottom:1px solid #ddd;padding:8px 0}',
+    '#os .os-table td{border:0;padding:2px 0}',
+    '#os .os-table td.t{font-size:15px}',
+    '#os .os-table td[data-l]:not(.t)::before{content:attr(data-l) ": ";font-family:Oswald,"Arial Narrow",sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--deep)}',
+    '#os .os-table .sm{display:inline;margin-left:6px}',
+    '}',
+    '@media print{',
+    '.ozr,.ozr-back,.os-screen{display:none!important}',
+    '#os{max-width:none;color:#000}',
+    '#os *{color:#000!important;background:transparent!important;box-shadow:none!important}',
+    '#os .os-top{padding:0 0 6pt;border-bottom:1.5pt solid #000}',
+    '#os .os-name{font-size:26pt}',
+    '#os .os-desc{margin-top:4pt;font-size:9pt;letter-spacing:1.5pt}',
+    '#os .os-body{padding:8pt 0 0}',
+    '#os .os-rights{margin:0 0 7pt;padding:0 0 0 7pt;border-left:2pt solid #000;font-size:9.5pt;line-height:1.4}',
+    '#os .os-contact{margin:0 0 6pt;font-size:9pt;line-height:1.45}',
+    '#os .os-contact b{font-size:8pt}',
+    '#os .os-bio{margin:0 0 8pt;font-size:9pt;line-height:1.45;max-width:none}',
+    '#os .os-h{font-size:8.5pt;margin-bottom:3pt}',
+    '#os .os-table{font-size:8pt;line-height:1.25}',
+    '#os .os-table th{font-size:7pt;padding:2pt 3pt;border-bottom:1pt solid #000}',
+    '#os .os-table td{padding:3pt 3pt;border-bottom:.5pt solid #999}',
+    '#os .os-table td.t{width:30%}',
+    '#os .os-table .sm{font-size:7pt}',
+    '#os .os-table a{border-bottom:0;text-decoration:underline}',
+    '#os .os-table tr{break-inside:avoid}',
+    '#os .os-foot{margin-top:7pt;padding-top:5pt;border-top:.5pt solid #000;font-size:8.5pt;line-height:1.4}',
+    '#os .os-hint{display:none}',
+    '}'
+  ].join('\n');
+
+  function ensureStyle() {
+    if (document.getElementById('ozsync-style')) return;
+    var s = document.createElement('style');
+    s.id = 'ozsync-style';
+    s.textContent = CSS;
+    (document.head || document.documentElement).appendChild(s);
+  }
+  // True only when this page is the top window (not framed). A cross-origin parent can throw: treat that as framed.
+  function isTop() { try { return window.top === window; } catch (e) { return false; } }
+  // New-tab link through the URL gates. Returns a span when href is empty.
+  function newTabLink(href, cls, text) {
+    if (!href) return el('span', cls, text);
+    var a = el('a', cls, text);
+    a.setAttribute('href', href);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+    return a;
+  }
+  function selectText(node) {
+    var sel = window.getSelection && window.getSelection();
+    if (!sel || !document.createRange) return;
+    var r = document.createRange();
+    r.selectNodeContents(node);
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+
+  // An embed without allow="clipboard-write" blocks writeText (and Chrome logs a violation), so ask the policy first.
+  function clipboardAllowed() {
+    try {
+      var pp = document.permissionsPolicy || document.featurePolicy;
+      return !pp || !pp.allowsFeature || pp.allowsFeature('clipboard-write');
+    } catch (e) { return true; }
+  }
+  var panelSeq = 0, openPanel = null;
+  // Builds the request panel (not attached). songTitle '' means a general catalogue request.
+  function requestPanel(s, songTitle) {
+    s = s || settings(null);
+    var email = validEmail(s.contact_email) ? str(s.contact_email) : DEFAULTS.contact_email;
+    var song = str(songTitle), id = 'ozr-title-' + (++panelSeq);
+    var box = el('div', 'ozr');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', id);
+    var h = el('h2', 'ozr-h', 'Request a license');
+    h.id = id; h.tabIndex = -1;
+    box.appendChild(h);
+    if (song) box.appendChild(el('p', 'ozr-song', 'Song: ' + song));
+    box.appendChild(el('p', null, 'Send your request by email to:'));
+    var row = el('div', 'ozr-row'), mail = el('span', 'ozr-mail', email), copy = el('button', 'ozr-b ozr-copy', 'Copy email');
+    copy.type = 'button';
+    row.appendChild(mail); row.appendChild(copy);
+    box.appendChild(row);
+    var status = el('p', 'ozr-status');
+    status.setAttribute('aria-live', 'polite');
+    box.appendChild(status);
+    copy.addEventListener('click', function () {
+      function manual() { selectText(mail); status.textContent = 'Press Ctrl+C (or Cmd+C) to copy.'; }
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.writeText || !clipboardAllowed()) { manual(); return; }
+        navigator.clipboard.writeText(email).then(function () { status.textContent = 'Email copied.'; }, manual);
+      } catch (e) { manual(); }
+    });
+    box.appendChild(el('p', null, 'Include in your request:'));
+    var ul = el('ul');
+    INCLUDE.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+    box.appendChild(ul);
+    box.appendChild(el('p', 'ozr-turn', 'You get a quote within ' + (str(s.turnaround) || DEFAULTS.turnaround) + '.'));
+    var acts = el('div', 'ozr-acts'), form = contactUrl(s.contact_url);
+    if (form) acts.appendChild(newTabLink(form, 'ozr-b solid ozr-form', 'Fill out the request form'));
+    var mt = mailtoHref({ contact_email: email }, song || GENERAL_SUBJECT);
+    if (mt) acts.appendChild(newTabLink(mt, form ? 'ozr-b ozr-mailto' : 'ozr-b solid ozr-mailto', 'Open in your email app'));
+    var close = el('button', 'ozr-b ozr-close', 'Close');
+    close.type = 'button';
+    acts.appendChild(close);
+    box.appendChild(acts);
+    return box;
+  }
+  // Opens the panel next to `opener` (the clicked button). Escape, Close or the backdrop close it; focus returns to opener.
+  function openRequest(s, songTitle, opener) {
+    if (openPanel) openPanel.close(true);
+    ensureStyle();
+    var back = el('div', 'ozr-back'), box = requestPanel(s, songTitle);
+    var prev = opener || document.activeElement, de = document.documentElement;
+    var docH = Math.max(de.scrollHeight, document.body.scrollHeight);
+    document.body.appendChild(back);
+    document.body.appendChild(box);
+    // Place it beside the opener: in a tall, non-scrolling embed the viewport middle can be far from the reader.
+    var h = box.offsetHeight, y = window.pageYOffset || 0, vh = window.innerHeight || h, mid = y + vh / 2;
+    if (opener && opener.getBoundingClientRect) { var r = opener.getBoundingClientRect(); mid = y + r.top + r.height / 2; }
+    var top = mid - h / 2;
+    if (h + 24 <= vh) top = Math.min(Math.max(top, y + 12), y + vh - h - 12);
+    top = Math.max(Math.min(top, docH - h - 12), 12);
+    box.style.top = Math.round(top) + 'px';
+    function onKey(e) {
+      if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); api.close(); return; }
+      if (e.key !== 'Tab') return;
+      var f = Array.prototype.slice.call(box.querySelectorAll('a[href], button')), a = document.activeElement, i = f.indexOf(a);
+      if (!f.length) return;
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+    }
+    var api = { node: box, close: function (quiet) {
+      if (openPanel !== api) return;
+      openPanel = null;
+      document.removeEventListener('keydown', onKey, true);
+      [back, box].forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+      if (!quiet && prev && prev.focus && de.contains(prev)) prev.focus();
+    } };
+    box.querySelector('.ozr-close').addEventListener('click', function () { api.close(); });
+    back.addEventListener('click', function () { api.close(); });
+    document.addEventListener('keydown', onKey, true);
+    openPanel = api;
+    box.querySelector('.ozr-h').focus();
+    return api;
+  }
+
+  function osCell(label, text, cls, small) {
+    var td = el('td', cls || '', text);
+    td.setAttribute('data-l', label);
+    if (small) td.appendChild(el('span', 'sm', small));
+    return td;
+  }
+  function osTable(rows) {
+    var tb = el('table', 'os-table'), head = el('thead'), hr = el('tr'), body = el('tbody');
+    ['Title', 'Time', 'Mood', 'Genre', 'BPM', 'Key', 'Vocal', 'Explicit', 'Available', 'Listen'].forEach(function (h) { hr.appendChild(el('th', '', h)); });
+    head.appendChild(hr); tb.appendChild(head); tb.appendChild(body);
+    rows.forEach(function (s) {
+      var tr = el('tr');
+      tr.appendChild(osCell('Title', s.title, 't'));
+      tr.appendChild(osCell('Time', s.duration));
+      tr.appendChild(osCell('Mood', s.moods.slice(0, 2).join(', ')));
+      tr.appendChild(osCell('Genre', s.genre + (s.genre2 ? ' / ' + s.genre2 : '')));
+      tr.appendChild(osCell('BPM', s.bpm == null ? '' : String(s.bpm)));
+      tr.appendChild(osCell('Key', s.key));
+      tr.appendChild(osCell('Vocal', s.vocal, '', s.language));
+      tr.appendChild(osCell('Explicit', s.explicit ? 'Yes' : 'No'));
+      tr.appendChild(osCell('Available', s.badges.join(', ')));
+      var td = osCell('Listen', ''), href = safeLink(s.listen);
+      if (href) td.appendChild(newTabLink(href, '', 'Listen'));
+      tr.appendChild(td);
+      body.appendChild(tr);
+    });
+    return tb;
+  }
+  // Draws the one-sheet into `root` (the element with id "os"). data: result of load().
+  // opts.catalogue: 'link' (same-tab link, top-level page only) or 'text' (plain URL, framed). opts.hint: print hint.
+  function renderOneSheet(root, data, opts) {
+    data = data || {}; opts = opts || {};
+    ensureStyle();
+    var st = data.settings || settings(null);
+    var email = validEmail(st.contact_email) ? str(st.contact_email) : DEFAULTS.contact_email;
+    var turn = str(st.turnaround) || DEFAULTS.turnaround;
+    while (root.firstChild) root.removeChild(root.firstChild);
+    var top = el('header', 'os-top');
+    top.appendChild(el('h1', 'os-name', 'Danyel OZ'));
+    top.appendChild(el('p', 'os-desc', OS_DESC));
+    root.appendChild(top);
+
+    var body = el('div', 'os-body');
+    body.appendChild(el('p', 'os-rights', rightsText(st)));
+    var c = el('p', 'os-contact');
+    c.appendChild(el('b', '', 'Licensing'));
+    c.appendChild(el('span', 'os-mail', email));
+    c.appendChild(document.createTextNode('. Reply within ' + turn + '.'));
+    var req = el('button', 'os-req os-screen', 'Request a license');
+    req.type = 'button';
+    req.addEventListener('click', function () { openRequest(st, '', req); });
+    c.appendChild(req);
+    c.appendChild(el('br'));
+    var cat = safeLink(CATALOGUE_URL);
+    if (opts.catalogue === 'link') {
+      c.appendChild(el('b', '', 'Catalogue'));
+      var a = el('a', 'os-cat', cat.replace(/^https:\/\//, ''));
+      a.setAttribute('href', cat);
+      c.appendChild(a);
+    } else c.appendChild(el('span', 'os-cat', 'Licensing catalogue: ' + cat));
+    body.appendChild(c);
+
+    body.appendChild(el('p', 'os-bio', OS_BIO));
+    body.appendChild(el('h2', 'os-h', 'Songs for sync'));
+    var rows = data.ok ? pickOneSheet(data.songs || []) : [];
+    if (rows.length) body.appendChild(osTable(rows));
+    else body.appendChild(el('p', 'os-msg', OS_FALLBACK));
+    body.appendChild(el('p', 'os-foot', 'Files on request: WAV, instrumental, clean, stems and 60 s or 30 s cutdowns where available. ' +
+      'Send the song, your project, the media, the territory and the term, and you get a quote within ' + turn + '.'));
+    root.appendChild(body);
+    if (opts.hint) root.appendChild(el('p', 'os-hint', 'To save this page as a PDF, use your browser’s Print and choose Save as PDF.'));
+  }
+
   window.OZSync = {
     SHEET_ID: SHEET_ID, BASE: BASE, MOODS: MOODS, GENRES: GENRES, VOCALS: VOCALS, KEYS: KEYS, BADGES: BADGES, TEMPOS: TEMPOS,
     DEFAULTS: DEFAULTS, LINK_HOSTS: LINK_HOSTS, IMAGE_HOSTS: IMAGE_HOSTS, CONTACT_HOSTS: CONTACT_HOSTS, EMAIL_RE: EMAIL_RE, NEED: NEED,
     el: el, norm: norm, parseCsv: parseCsv, hasHeads: hasHeads, tabUrl: tabUrl, fetchTab: fetchTab,
     today: today, released: released, flag: flag, inList: inList, moodList: moodList, bpmOf: bpmOf, tempoOf: tempoOf,
     safeUrl: safeUrl, safeLink: safeLink, coverUrl: coverUrl, validEmail: validEmail, contactUrl: contactUrl, contactHref: contactHref,
-    settings: settings, rightsText: rightsText, processText: processText,
-    song: song, songs: songs, complete: complete, filter: filter, pickOneSheet: pickOneSheet, load: load
+    mailtoHref: mailtoHref, settings: settings, rightsText: rightsText, processText: processText,
+    song: song, songs: songs, complete: complete, filter: filter, pickOneSheet: pickOneSheet, load: load,
+    CATALOGUE_URL: CATALOGUE_URL, ONE_SHEET_URL: ONE_SHEET_URL, INCLUDE: INCLUDE, isTop: isTop,
+    requestPanel: requestPanel, openRequest: openRequest, renderOneSheet: renderOneSheet
   };
 })();

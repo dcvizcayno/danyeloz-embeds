@@ -10,7 +10,9 @@
 <!-- Danyel OZ: Sync licensing catalogue
      Google Sites: Insert > Embed > By URL: https://dcvizcayno.github.io/danyeloz-embeds/sync.html
      Songs and their sync details come from the admin app (Tracks screen, Sync fields). Rights, contact and turnaround
-     come from the sync_settings tab. Only released songs show. Nothing on this page reads the page address. -->
+     come from the sync_settings tab. Only released songs show. Nothing on this page reads the page address.
+     Google Sites frames embeds in a sandbox (no mailto, no top navigation), so "Request a license" opens an in-page
+     panel and "Get the one-sheet" shows the one-sheet inside this page. Only "Print or save as PDF" opens a new tab. -->
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600&family=Great+Vibes&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: #fff; }
@@ -65,7 +67,7 @@
   .sy-listen { margin-top: 12px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #555; display: flex; flex-wrap: wrap; gap: 4px 12px; }
   .sy-listen a { color: #111; text-decoration: none; border-bottom: 1px solid #111; }
   .sy-listen a:hover, .sy-listen a:focus-visible { color: var(--red); border-color: var(--red); outline: none; }
-  .sy-req { margin-top: 14px; align-self: flex-start; text-decoration: none; padding: 10px 14px; font-size: 12px; font-weight: 500; letter-spacing: 2.5px;
+  .sy-req { margin-top: 14px; align-self: flex-start; text-decoration: none; background: transparent; cursor: pointer; padding: 10px 14px; font-size: 12px; font-weight: 500; letter-spacing: 2.5px;
     text-transform: uppercase; border: 1px solid #111; color: #111 !important; }
   .sy-req:hover, .sy-req:focus-visible { background: var(--red); border-color: var(--red); color: #fff !important; outline: none; }
 
@@ -77,6 +79,9 @@
   .sy-how p { margin: 0 0 18px; font-family: 'Open Sans', Arial, sans-serif; font-size: 15px; line-height: 1.7; max-width: 720px; }
   .sy-how .sy-btn.solid { background: #fff; border-color: #fff; color: #0a0506 !important; }
   .sy-how .sy-btn.solid:hover, .sy-how .sy-btn.solid:focus-visible { background: #0a0506; border-color: #0a0506; color: #fff !important; }
+
+  .sy-sheetbar { display: flex; flex-wrap: wrap; gap: 10px; background: #0a0506; padding: 16px 20px; }
+  .sy-main[hidden], .sy-sheet[hidden] { display: none; }
 
   @media (max-width: 760px) {
     .sy-hero, .sy-how { padding: 26px 18px; }
@@ -106,15 +111,68 @@
   if (!S) { root.firstChild.textContent = FALLBACK; return; }
   var el = S.el;
 
+  // href must already have passed an OZSync gate (safeLink).
   function link(href, cls, text) {
     var a = el('a', cls, text);
     a.href = href;
-    if (href.indexOf('mailto:') !== 0) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
     return a;
   }
-  function requestLink(settings, title, cls, text) {
-    var href = S.contactHref(settings, title);
-    return href ? link(href, cls, text) : null;
+  function button(cls, text, onClick) {
+    var b = el('button', cls, text);
+    b.type = 'button';
+    b.addEventListener('click', function () { onClick(b); });
+    return b;
+  }
+  // Opens the in-page request panel (works inside the Google Sites sandbox). songTitle '' = general request.
+  function requestButton(settings, songTitle, cls) {
+    return button(cls, 'Request a license', function (b) { S.openRequest(settings, songTitle, b); });
+  }
+  function actions(settings) {
+    var btns = el('div', 'sy-btns');
+    btns.appendChild(requestButton(settings, '', 'sy-btn solid'));
+    btns.appendChild(button('sy-btn sy-open-sheet', 'Get the one-sheet', showSheet));
+    return btns;
+  }
+
+  // Printable one-sheet. Top-level page: same tab (no new tab, so no chain). Framed (an embed, where print is
+  // blocked): one fixed named tab, so repeated clicks reuse it instead of opening one tab per click.
+  // No rel: noopener (and noreferrer, which implies it) stops the named tab being reused, so each click opened a new
+  // tab in tests. The target is our own page; referrerpolicy keeps the referrer hidden.
+  var PRINT_TARGET = 'ozsync-onesheet';
+  function printLink(href) {
+    var a = el('a', 'sy-btn sy-print', 'Print or save as PDF');
+    a.href = href;
+    if (!S.isTop()) { a.target = PRINT_TARGET; a.referrerPolicy = 'no-referrer'; }
+    return a;
+  }
+
+  /* One-sheet view inside this page: no new window, so no tab chain in an embed. */
+  var mainBox = null, sheetBox = null, sheetData = null, sheetOpener = null;
+  function showSheet(opener) {
+    sheetOpener = opener;
+    if (!sheetBox) {
+      sheetBox = el('section', 'sy-sheet');
+      sheetBox.setAttribute('aria-label', 'One-sheet');
+      var bar = el('div', 'sy-sheetbar');
+      bar.appendChild(button('sy-btn sy-back', 'Back to the catalogue', hideSheet));
+      var printable = S.safeLink(ONE_SHEET);
+      if (printable) bar.appendChild(printLink(printable));
+      sheetBox.appendChild(bar);
+      var os = el('div');
+      os.id = 'os';
+      sheetBox.appendChild(os);
+      S.renderOneSheet(os, sheetData, { catalogue: 'text' });
+      root.appendChild(sheetBox);
+    }
+    mainBox.hidden = true;
+    sheetBox.hidden = false;
+    sheetBox.querySelector('.sy-back').focus();
+  }
+  function hideSheet() {
+    sheetBox.hidden = true;
+    mainBox.hidden = false;
+    if (sheetOpener) sheetOpener.focus();
   }
 
   function hero(settings) {
@@ -123,12 +181,7 @@
     h.appendChild(el('h1', 'sy-h', HEADING));
     h.appendChild(el('p', 'sy-lead', INTRO));
     h.appendChild(el('p', 'sy-rights', S.rightsText(settings)));
-    var btns = el('div', 'sy-btns');
-    var req = requestLink(settings, 'Danyel OZ catalogue', 'sy-btn solid', 'Request a license');
-    if (req) btns.appendChild(req);
-    var sheet = S.safeLink(ONE_SHEET);
-    if (sheet) btns.appendChild(link(sheet, 'sy-btn', 'Get the one-sheet'));
-    h.appendChild(btns);
+    h.appendChild(actions(settings));
     return h;
   }
 
@@ -136,12 +189,7 @@
     var b = el('section', 'sy-how');
     b.appendChild(el('h2', null, 'How licensing works'));
     b.appendChild(el('p', null, S.processText(settings)));
-    var btns = el('div', 'sy-btns');
-    var req = requestLink(settings, 'Danyel OZ catalogue', 'sy-btn solid', 'Request a license');
-    if (req) btns.appendChild(req);
-    var sheet = S.safeLink(ONE_SHEET);
-    if (sheet) btns.appendChild(link(sheet, 'sy-btn', 'Get the one-sheet'));
-    b.appendChild(btns);
+    b.appendChild(actions(settings));
     return b;
   }
 
@@ -188,8 +236,7 @@
       heard.forEach(function (l) { row.appendChild(link(s.links[l[0]], null, l[1])); });
       c.appendChild(row);
     }
-    var req = requestLink(settings, s.title, 'sy-req', 'Request a license');
-    if (req) c.appendChild(req);
+    c.appendChild(requestButton(settings, s.title, 'sy-req'));
     return c;
   }
 
@@ -288,13 +335,17 @@
   function render(data) {
     while (root.firstChild) root.removeChild(root.firstChild);
     var settings = data.settings || S.settings(null);
-    root.appendChild(hero(settings));
-    if (data.ok && data.songs.length) root.appendChild(catalogue(data.songs, settings));
+    sheetData = { ok: data.ok, songs: data.songs || [], settings: settings };
+    sheetBox = null;
+    mainBox = el('div', 'sy-main');
+    mainBox.appendChild(hero(settings));
+    if (data.ok && data.songs.length) mainBox.appendChild(catalogue(data.songs, settings));
     else {
-      root.appendChild(el('p', 'sy-msg sy-fallback', FALLBACK));
-      root.appendChild(el('p', 'sy-note', OTHER));
+      mainBox.appendChild(el('p', 'sy-msg sy-fallback', FALLBACK));
+      mainBox.appendChild(el('p', 'sy-note', OTHER));
     }
-    root.appendChild(how(settings));
+    mainBox.appendChild(how(settings));
+    root.appendChild(mainBox);
   }
 
   S.load().then(render).catch(function () { render({ ok: false, songs: [], settings: S.settings(null) }); });
