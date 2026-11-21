@@ -254,6 +254,8 @@
     '.ozr-h{margin:0 0 10px;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;line-height:1.05;letter-spacing:.5px;text-transform:uppercase;outline:none}',
     '.ozr p{margin:0 0 10px}',
     '.ozr-song{font-weight:600}',
+    '.ozr-fbox{margin:6px 0 18px;padding:0 0 16px;border-bottom:1px solid #ece7e7}',
+    '.ozr-fh{margin:0 0 10px;font-family:Oswald,"Arial Narrow",sans-serif;font-weight:500;font-size:14px;letter-spacing:2.5px;text-transform:uppercase}',
     '.ozr-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px}',
     '.ozr-mail{display:inline-block;font-weight:600;font-size:17px;padding:6px 10px;background:#faf6f6;border:1px solid #ece7e7;user-select:all;-webkit-user-select:all}',
     '.ozr-status{min-height:1.4em;font-size:13px;color:#b0101f}',
@@ -358,6 +360,15 @@
     } catch (e) { return true; }
   }
   var panelSeq = 0, openPanel = null;
+  // Keyboard stops kept inside the open panel. The form's honeypot input has tabindex -1 and stays out.
+  var TAB_STOPS = 'a[href], button, input:not([tabindex="-1"]), select, textarea';
+  // True when a form field in the panel holds something the visitor entered (the prefilled song does not count).
+  function typed(box, songTitle) {
+    return Array.prototype.slice.call(box.querySelectorAll('input:not([tabindex="-1"]), select, textarea')).some(function (n) {
+      var v = str(n.value);
+      return n.name === 'songs' ? v !== str(songTitle) : v !== '';
+    });
+  }
   // Builds the request panel (not attached). songTitle '' means a general catalogue request.
   function requestPanel(s, songTitle) {
     s = s || settings(null);
@@ -371,7 +382,12 @@
     h.id = id; h.tabIndex = -1;
     box.appendChild(h);
     if (song) box.appendChild(el('p', 'ozr-song', 'Song: ' + song));
-    box.appendChild(el('p', null, 'Send your request by email to:'));
+    // With forms-core.js loaded (sync.html), the inline request form comes first and email becomes the fallback row.
+    var Forms = window.OZForms && typeof window.OZForms.render === 'function' ? window.OZForms : null;
+    var fbox = Forms ? el('div', 'ozr-fbox') : null;
+    if (fbox) { fbox.appendChild(el('h3', 'ozr-fh', 'Sync license request')); box.appendChild(fbox); }
+    var intro = el('p', null, fbox ? 'Prefer email? Send your request to:' : 'Send your request by email to:');
+    box.appendChild(intro);
     var row = el('div', 'ozr-row'), mail = el('span', 'ozr-mail', email), copy = el('button', 'ozr-b ozr-copy', 'Copy email');
     copy.type = 'button';
     row.appendChild(mail); row.appendChild(copy);
@@ -386,11 +402,24 @@
         navigator.clipboard.writeText(email).then(function () { status.textContent = 'Email copied.'; }, manual);
       } catch (e) { manual(); }
     });
-    box.appendChild(el('p', null, 'Include in your request:'));
+    var inc = el('p', null, 'Include in your request:');
+    box.appendChild(inc);
     var ul = el('ul');
     INCLUDE.forEach(function (t) { ul.appendChild(el('li', null, t)); });
     box.appendChild(ul);
-    box.appendChild(el('p', 'ozr-turn', 'You get a quote within ' + (str(s.turnaround) || DEFAULTS.turnaround) + '.'));
+    var turn = str(s.turnaround) || DEFAULTS.turnaround;
+    box.appendChild(el('p', 'ozr-turn', 'You get a quote within ' + turn + '.'));
+    if (fbox) {
+      // The form asks for what the checklist lists. Missing or invalid forms config: back to today's email-only panel.
+      inc.hidden = true; ul.hidden = true;
+      box.ozrForm = Forms.render(fbox, 'sync', { prefill: { songs: song }, turnaround: turn, onUnavailable: function () {
+        if (fbox.parentNode) fbox.parentNode.removeChild(fbox);
+        intro.textContent = 'Send your request by email to:';
+        inc.hidden = false; ul.hidden = false;
+        box.ozrForm = null;
+        if (box.ozrPlace) box.ozrPlace();
+      } });
+    }
     var acts = el('div', 'ozr-acts'), form = contactUrl(s.contact_url);
     if (form) acts.appendChild(newTabLink(form, 'ozr-b solid ozr-form', 'Fill out the request form'));
     var mt = mailtoHref({ contact_email: email }, song || GENERAL_SUBJECT);
@@ -401,7 +430,8 @@
     box.appendChild(acts);
     return box;
   }
-  // Opens the panel next to `opener` (the clicked button). Escape, Close or the backdrop close it; focus returns to opener.
+  // Opens the panel next to `opener` (the clicked button). Escape, Close or the backdrop (unless a field has typed text)
+  // close it; focus returns to opener.
   function openRequest(s, songTitle, opener) {
     if (openPanel) openPanel.close(true);
     ensureStyle();
@@ -411,16 +441,22 @@
     document.body.appendChild(back);
     document.body.appendChild(box);
     // Place it beside the opener: in a tall, non-scrolling embed the viewport middle can be far from the reader.
-    var h = box.offsetHeight, y = window.pageYOffset || 0, vh = window.innerHeight || h, mid = y + vh / 2;
+    var y = window.pageYOffset || 0, vh0 = window.innerHeight, mid = y + (vh0 || 0) / 2;
     if (opener && opener.getBoundingClientRect) { var r = opener.getBoundingClientRect(); mid = y + r.top + r.height / 2; }
-    var top = mid - h / 2;
-    if (h + 24 <= vh) top = Math.min(Math.max(top, y + 12), y + vh - h - 12);
-    top = Math.max(Math.min(top, docH - h - 12), 12);
-    box.style.top = Math.round(top) + 'px';
+    function place() {
+      var h = box.offsetHeight, vh = vh0 || h, top = mid - h / 2;
+      if (h + 24 <= vh) top = Math.min(Math.max(top, y + 12), y + vh - h - 12);
+      top = Math.max(Math.min(top, docH - h - 12), 12);
+      box.style.top = Math.round(top) + 'px';
+    }
+    place();
+    // Without a forms config the panel shrinks to the email-only one: place it again so it sits where it does today.
+    box.ozrPlace = place;
     function onKey(e) {
       if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); api.close(); return; }
       if (e.key !== 'Tab') return;
-      var f = Array.prototype.slice.call(box.querySelectorAll('a[href], button')), a = document.activeElement, i = f.indexOf(a);
+      var f = Array.prototype.slice.call(box.querySelectorAll(TAB_STOPS)).filter(function (n) { return !n.disabled && n.offsetParent !== null; }),
+        a = document.activeElement, i = f.indexOf(a);
       if (!f.length) return;
       if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
       else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
@@ -429,11 +465,13 @@
       if (openPanel !== api) return;
       openPanel = null;
       document.removeEventListener('keydown', onKey, true);
+      if (box.ozrForm) { box.ozrForm.destroy(); box.ozrForm = null; }
       [back, box].forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
       if (!quiet && prev && prev.focus && de.contains(prev)) prev.focus();
     } };
     box.querySelector('.ozr-close').addEventListener('click', function () { api.close(); });
-    back.addEventListener('click', function () { api.close(); });
+    // A stray click beside the panel must not throw away a half-filled form; Close and Escape still close it.
+    back.addEventListener('click', function () { if (!typed(box, songTitle)) api.close(); });
     document.addEventListener('keydown', onKey, true);
     openPanel = api;
     box.querySelector('.ozr-h').focus();
