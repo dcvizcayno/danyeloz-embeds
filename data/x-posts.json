@@ -308,5 +308,22 @@
     "metrics": {},
     "score": null,
     "picked": true
+  },
+  {
+    "id": "2124628272084590888",
+    "song": "Donna",
+    "hook": "release-out",
+    "link": "bandcamp",
+    "kind": "release",
+    "release": "out",
+    "text": "\"Donna\" is out today.\n\nI thought she was happy. I didn't know what was happening behind the smile. #NewMusic\nhttps://danyeloz.bandcamp.com/track/donna-2\n\nWant more? Check my Official Site https://www.danyeloz.info/home",
+    "posted_at": "2026-11-23T06:17+08:00",
+    "hour": 6,
+    "weekday": "Mon",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null
   }
 ]
