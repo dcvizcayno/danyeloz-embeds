@@ -432,5 +432,21 @@
     "test": false,
     "metrics": {},
     "score": null
+  },
+  {
+    "id": "2125214832291160568",
+    "song": "Close enough",
+    "hook": "question",
+    "link": "bandcamp",
+    "text": "Ever held on to something long after it was over? \"Close enough\" lives in that space.\nhttps://danyeloz.bandcamp.com/album/close-enough\n\nWant more? Check my Official Site https://www.danyeloz.info/home\nAlso availlable of Spotify: https://open.spotify.com/album/7H3QGEvoyAAjdIo5vGZSq5?si=47f0c7457de24932",
+    "posted_at": "2026-11-24T21:07+08:00",
+    "hour": 21,
+    "weekday": "Tue",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null,
+    "picked": false
   }
 ]
