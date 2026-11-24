@@ -415,5 +415,22 @@
       "user_profile_clicks": 0
     },
     "score": 0.0
+  },
+  {
+    "id": "2125064284648443930",
+    "song": "Victoria",
+    "hook": "release-soon",
+    "link": "bandcamp",
+    "kind": "release",
+    "release": "soon",
+    "text": "New song in 6 days: \"Victoria\". Pre-order it on Bandcamp. #NewMusic\nhttps://danyeloz.bandcamp.com/track/victoria-2\n\nWant more? Check my Official Site https://www.danyeloz.info/home",
+    "posted_at": "2026-11-24T11:09+08:00",
+    "hour": 11,
+    "weekday": "Tue",
+    "revisions": 0,
+    "status": "posted",
+    "test": false,
+    "metrics": {},
+    "score": null
   }
 ]
