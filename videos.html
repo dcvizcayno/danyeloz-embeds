@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<!--
+  Danyel OZ video carousel (danyeloz-embeds/videos.html).
+  Embed in Google Sites with Embed > By URL:
+    https://dcvizcayno.github.io/danyeloz-embeds/videos.html?list=music-videos
+  ?list=<key> shows one playlist from the Song Database tabs video_playlists (rows with show TRUE) and
+  playlist_videos (filled by apps-script/Playlists.gs). Without ?list= it shows the whole channel from CONFIG.apiUrl.
+  Sheet and API text only ever reaches the page as textContent or checked attributes, never as markup.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danyel OZ Videos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#141414; --line:#2a2a2a;
+    --text:#f4f4f4; --muted:#9b9b9b; --accent:#ff2d55;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"Inter","Segoe UI",Arial,sans-serif;overflow:hidden}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+  .dz{position:relative;padding:18px 0 16px;user-select:none;-webkit-user-select:none}
+
+  /* Top bar */
+  .dz-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px 14px}
+  .dz-brand{font-family:"Anton",Impact,sans-serif;font-size:20px;letter-spacing:2px;text-transform:uppercase;line-height:1}
+  .dz-brand small{display:block;font-family:"Inter",sans-serif;font-size:10.5px;letter-spacing:3px;color:var(--muted);margin-top:5px;font-weight:600}
+  .dz-sub{display:flex;align-items:center;gap:8px;background:#fff;color:#111;text-decoration:none;
+    font-size:12px;font-weight:600;letter-spacing:.6px;padding:8px 14px;border-radius:999px;transition:transform .15s}
+  .dz-sub:hover{transform:translateY(-1px)}
+  .dz-sub svg{width:17px;height:12px}
+
+  /* Stage */
+  .dz-stage{position:relative;overflow:hidden;touch-action:pan-y;cursor:grab}
+  .dz-stage.dragging{cursor:grabbing}
+  .dz-track{position:absolute;inset:0}
+  .dz-card{position:absolute;top:50%;left:0;border-radius:4px;overflow:hidden;background:#1a1a1a;
+    box-shadow:0 14px 40px rgba(0,0,0,.55);will-change:transform;outline:none;
+    transition:transform .65s cubic-bezier(.2,.8,.2,1),opacity .45s ease,filter .45s ease}
+  .dz-card.instant{transition:none}
+  .dz-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;
+    pointer-events:none;-webkit-user-drag:none;transform:scale(1.06)}   /* trims thin edges baked into some thumbnails */
+  .dz-card img.hq{transform:scale(1.4)}       /* crops the black bars off 4:3 fallback thumbnails */
+  .dz-card::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.55) 68%,rgba(0,0,0,.92) 100%)}
+  .dz-card:not(.active){filter:brightness(.55) saturate(.6)}
+  .dz-card:not(.active):hover{filter:brightness(.75) saturate(.8)}
+  .dz-card.active{box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.14)}
+  .dz-card:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+
+  .dz-name{position:absolute;left:8%;right:22%;bottom:7%;z-index:2;font-family:"Anton",Impact,sans-serif;
+    text-transform:uppercase;line-height:.95;letter-spacing:.5px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.6);
+    overflow-wrap:break-word}
+  .dz-name small{display:block;font-family:"Inter",sans-serif;font-weight:600;font-size:9px;letter-spacing:3px;
+    opacity:.75;margin-top:6px;text-shadow:none}
+  .dz-num{position:absolute;right:5%;bottom:7%;z-index:2;writing-mode:vertical-rl;font-family:"Inter",sans-serif;
+    font-weight:300;letter-spacing:4px;color:rgba(255,255,255,.85);line-height:1}
+  .dz-num::before{content:"";display:inline-block;width:1px;height:26px;background:rgba(255,255,255,.45);margin-bottom:10px}
+  .dz-dur{position:absolute;top:6%;left:8%;z-index:2;font-size:10.5px;font-weight:700;letter-spacing:.6px;
+    background:rgba(0,0,0,.6);padding:3px 7px;border-radius:3px;opacity:0;transition:opacity .3s}
+  .dz-card.active .dz-dur{opacity:1}
+  .dz-play{position:absolute;left:50%;top:44%;z-index:3;width:62px;height:62px;border-radius:50%;
+    transform:translate(-50%,-50%) scale(.7);opacity:0;background:rgba(255,45,85,.92);
+    display:grid;place-items:center;transition:opacity .3s,transform .3s;box-shadow:0 8px 30px rgba(255,45,85,.45)}
+  .dz-play::after{content:"";border-style:solid;border-width:11px 0 11px 18px;border-color:transparent transparent transparent #fff;margin-left:4px}
+  .dz-card.active .dz-play{opacity:.9;transform:translate(-50%,-50%) scale(1)}
+  .dz-card.active:hover .dz-play{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+
+  /* Skeleton */
+  .dz-card.skel{background:linear-gradient(90deg,#161616,#232323,#161616);background-size:200% 100%;animation:shine 1.2s infinite}
+  .dz-card.skel::after{display:none}
+  @keyframes shine{to{background-position:-200% 0}}
+
+  /* Info row */
+  .dz-info{display:flex;align-items:center;gap:16px;padding:14px 20px 0}
+  .dz-text{flex:1;min-width:0}
+  .dz-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dz-meta{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dz-btn-play{flex:none;display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
+    font-size:12.5px;font-weight:700;letter-spacing:.6px;padding:10px 18px;border-radius:999px;transition:transform .15s}
+  .dz-btn-play:hover{transform:translateY(-1px)}
+  .dz-btn-play::before{content:"";border-style:solid;border-width:6px 0 6px 10px;border-color:transparent transparent transparent #fff}
+  .dz-nav{flex:none;display:flex;align-items:center;gap:10px}
+  .dz-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;
+    transition:background .15s,border-color .15s}
+  .dz-arrow:hover{background:#1e1e1e;border-color:#555}
+  .dz-arrow svg{width:16px;height:16px;stroke:#fff;stroke-width:2;fill:none}
+  .dz-count{font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--muted);min-width:62px;text-align:center}
+  .dz-count b{color:var(--text)}
+  .dz-progress{height:2px;background:#222;margin:14px 20px 0;border-radius:2px;overflow:hidden}
+  .dz-progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s ease}
+
+  .dz-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:14px;padding:20px}
+  .dz-msg p{margin-bottom:14px}
+  .dz-msg a,.dz-msg button{color:#fff;text-decoration:underline;font-size:14px}
+  .dz-msg .dz-sep{margin:0 8px}
+
+  /* Player */
+  .dz-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:14px;z-index:999}
+  .dz-modal.open{display:flex}
+  .dz-box{width:min(960px,100%)}
+  .dz-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;max-height:calc(100vh - 90px);margin:0 auto}
+  .dz-player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .dz-bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .dz-now{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dz-ext{flex:none;color:#9fd0ff;font-size:12px;text-decoration:none}
+  .dz-close{width:36px;height:36px;border-radius:50%;background:#262626;font-size:16px}
+  .dz-close:hover{background:#3a3a3a}
+
+  @media (max-width:560px){
+    .dz-top{padding:0 14px 12px}
+    .dz-info{flex-wrap:wrap;padding:12px 14px 0;gap:10px}
+    .dz-text{flex-basis:100%}
+    .dz-btn-play{order:2}
+    .dz-nav{order:3;margin-left:auto}
+    .dz-progress{margin:12px 14px 0}
+    .dz-ext{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="dz" id="dz">
+  <div class="dz-top">
+    <div class="dz-brand" id="dzBrand">Danyel OZ<small>&nbsp;</small></div>
+    <a class="dz-sub" id="dzSub" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 28 20"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l8-4.5z" fill="#fff"/></svg>
+      SUBSCRIBE
+    </a>
+  </div>
+
+  <div class="dz-stage" id="dzStage" aria-roledescription="carousel" aria-label="Danyel OZ music videos">
+    <div class="dz-track" id="dzTrack"></div>
+  </div>
+
+  <div class="dz-info">
+    <div class="dz-text">
+      <div class="dz-title" id="dzTitle">&nbsp;</div>
+      <div class="dz-meta" id="dzMeta">&nbsp;</div>
+    </div>
+    <button class="dz-btn-play" id="dzPlay">PLAY</button>
+    <div class="dz-nav">
+      <button class="dz-arrow" id="dzPrev" aria-label="Previous video"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="dz-count" id="dzCount"><b>00</b> / 00</div>
+      <button class="dz-arrow" id="dzNext" aria-label="Next video"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </div>
+  <div class="dz-progress"><i id="dzBar"></i></div>
+</div>
+
+<div class="dz-modal" id="dzModal" aria-hidden="true">
+  <div class="dz-box">
+    <div class="dz-player" id="dzPlayer"></div>
+    <div class="dz-bar">
+      <button class="dz-arrow" id="dzMPrev" aria-label="Previous video"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="dz-now" id="dzNow"></div>
+      <a class="dz-ext" id="dzExt" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
+      <button class="dz-arrow" id="dzMNext" aria-label="Next video"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="dz-close" id="dzClose" aria-label="Close">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= SETTINGS (edit these) ================= */
+const CONFIG = {
+  apiUrl:    "https://script.google.com/macros/s/AKfycbxm00k_S3a6yZ973F6EcT9BGApRluYw9X1lG1WIHYzEQe7Jn4gM7LU_b_gu8edkb1VDKg/exec",
+  channelId: "UCQGcyCmSjCwLXNLbuPnGMhg",
+  handle:    "@danyeloz1554",
+  name:      "Danyel OZ",
+  tagline:   "LATEST RELEASES",   // whole-channel view only; a playlist uses its tagline from video_playlists
+  sheetId:   "1WD98RYgWPURqwtczPYEblCOOPFutAIO1jf42oSfbzPw",   // Song Database
+  maxVideos: 0,             // 0 = every video, or e.g. 20 for the 20 latest
+  autoRotateSeconds: 6,     // 0 = no automatic sliding
+  cacheMinutes: 30
+};
+/* ========================================================= */
+
+const $ = id => document.getElementById(id);
+const stage = $("dzStage"), track = $("dzTrack");
+const ID_RE = /^[\w-]{11}$/;
+const KEY_RE = /^[a-z0-9-]{1,40}$/;
+const PLAYLIST_RE = /^(PL|OL|UU|FL)[\w-]{10,64}$/;
+const HANDLE = /^@[\w.-]{3,40}$/.test(CONFIG.handle) ? CONFIG.handle : "@danyeloz1554";
+const CHANNEL_URL = "https://www.youtube.com/" + HANDLE;
+const GVIZ = "https://docs.google.com/spreadsheets/d/" + encodeURIComponent(CONFIG.sheetId) + "/gviz/tq?tqx=out:csv&headers=1&sheet=";
+const PARAMS = new URLSearchParams(location.search);
+const LIST_MODE = PARAMS.has("list");
+const LIST_RAW = LIST_MODE ? String(PARAMS.get("list") || "") : "";
+const LIST_KEY = KEY_RE.test(LIST_RAW) ? LIST_RAW : "";
+const CACHE_KEY = LIST_MODE ? "dz_carousel_list_" + (LIST_KEY || "none") : "dz_carousel_" + CONFIG.channelId;
+
+let videos = [], cards = [], active = 0, geo = null, meta = null;
+
+/* ---------- Helpers ---------- */
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function clear(node){ while (node.firstChild) node.removeChild(node.firstChild); }
+function str(v){ return String(v == null ? "" : v).trim(); }
+function flag(v){ return /^(true|yes|1|x)$/i.test(str(v)); }
+function timeAgo(d){
+  d = new Date(d); if (isNaN(d)) return "";
+  const sec = Math.max(1, (Date.now() - d) / 1000);
+  for (const [u, n] of [["year",31536000],["month",2592000],["week",604800],["day",86400],["hour",3600],["minute",60]]) {
+    const v = Math.floor(sec / n); if (v >= 1) return v + " " + u + (v > 1 ? "s" : "") + " ago";
+  }
+  return "just now";
+}
+function compact(n){
+  try { return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n); }
+  catch(e){ return String(n); }
+}
+function fmtDuration(sec){
+  sec = Math.round(sec); const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60, p = n => String(n).padStart(2,"0");
+  return h ? h + ":" + p(m) + ":" + p(s) : m + ":" + p(s);
+}
+const pad2 = n => String(n).padStart(2, "0");
+/* "Vibe Alone | Song About..." becomes "Vibe Alone" for the big card title */
+function shortTitle(t){
+  const s = String(t).split(/\s+[|–—-]\s+|\s*\(|:\s|\|/)[0].trim();
+  return s || String(t).trim();
+}
+function watchUrl(id){
+  return "https://www.youtube.com/watch?v=" + id + (meta && meta.playlist_id ? "&list=" + meta.playlist_id : "");
+}
+function playlistUrl(pid){ return "https://www.youtube.com/playlist?list=" + pid; }
+
+/* One check for every source (API, sheet, cache): valid id, plain-text title, numbers or nothing. */
+function cleanVideo(v){
+  if (!v || typeof v !== "object") return null;
+  const id = str(v.id);
+  if (!ID_RE.test(id)) return null;
+  const secs = Number(v.seconds), views = v.views === "" || v.views == null ? null : Number(v.views);
+  return { id, title: str(v.title).slice(0, 200) || "Untitled", published: str(v.published).slice(0, 40),
+    seconds: isFinite(secs) && secs > 0 ? secs : 0, views: views != null && isFinite(views) && views >= 0 ? views : null,
+    embeddable: v.embeddable !== false };
+}
+function cleanList(items){ return Array.isArray(items) ? items.map(cleanVideo).filter(Boolean) : []; }
+function cleanMeta(m){
+  if (!m || typeof m !== "object") return null;
+  const pid = str(m.playlist_id);
+  return { playlist_id: PLAYLIST_RE.test(pid) ? pid : "", title: str(m.title).slice(0, 80), tagline: str(m.tagline).slice(0, 60) };
+}
+
+/* ---------- Network (safe inside sandboxed embeds) ---------- */
+function withTimeout(p, ms){
+  return new Promise((res, rej) => { const t = setTimeout(() => rej(new Error("Timed out")), ms);
+    p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
+}
+function xhrText(url, ms){
+  return new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open("GET", url, true); x.timeout = ms;
+    x.onload = () => x.status >= 200 && x.status < 300 ? res(x.responseText) : rej(new Error("HTTP " + x.status));
+    x.onerror = () => rej(new Error("Network error")); x.ontimeout = () => rej(new Error("Timed out")); x.send(); });
+}
+async function getText(url, ms){
+  try { const r = await withTimeout(fetch(url), ms); if (!r.ok) throw new Error("HTTP " + r.status); return await r.text(); }
+  catch(e){ if (/HTTP \d/.test(e.message)) throw e; return await xhrText(url, ms); }
+}
+
+/* ---------- Song Database tabs (read by header name) ---------- */
+function parseCsv(t){
+  t = String(t || "");
+  const rows = []; let row = [], cur = "", inq = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inq) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') inq = false; else cur += c; }
+    else if (c === '"') inq = true; else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; row.push(cur); rows.push(row); row = []; cur = ""; }
+    else cur += c;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  const head = (rows.shift() || []).map(h => h.trim().toLowerCase());
+  return { head, rows: rows.filter(r => r.some(v => v.trim())).map(r => {
+    const o = {}; head.forEach((h, k) => { o[h] = (r[k] || "").trim(); }); return o; }) };
+}
+/* Resolves to the rows, or null when the tab can't be read or lacks the columns (gviz answers a missing tab with Sheet1). */
+async function readTab(name, heads){
+  try {
+    const tab = parseCsv(await getText(GVIZ + encodeURIComponent(name), 9000));
+    return heads.every(h => tab.head.indexOf(h) >= 0) ? tab.rows : null;
+  } catch(e) { return null; }
+}
+/* {status:"ok", meta, items} | {status:"unknown"} | {status:"failed", meta} */
+async function loadPlaylist(key){
+  const [lists, rows] = await Promise.all([
+    readTab("video_playlists", ["key", "playlist_id", "show"]),
+    readTab("playlist_videos", ["key", "position", "video_id", "title"])
+  ]);
+  if (!lists) return { status: "failed", meta: null };
+  const row = lists.find(r => r.key === key && flag(r.show));
+  if (!row) return { status: "unknown" };
+  const m = cleanMeta(row);
+  if (!rows) return { status: "failed", meta: m };
+  const items = rows.filter(r => r.key === key)
+    .map(r => ({ pos: Number(r.position), v: cleanVideo({ id: r.video_id, title: r.title, published: r.published,
+      seconds: r.seconds, views: r.views, embeddable: flag(r.embeddable) }) }))
+    .filter(x => x.v)
+    .sort((a, b) => (isFinite(a.pos) ? a.pos : Infinity) - (isFinite(b.pos) ? b.pos : Infinity))
+    .map(x => x.v);
+  return items.length ? { status: "ok", meta: m, items } : { status: "failed", meta: m };
+}
+
+/* ---------- Whole channel (CONFIG.apiUrl) ---------- */
+async function loadChannel(){
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(CONFIG.apiUrl)) throw new Error("No API address");
+  const d = JSON.parse(await getText(CONFIG.apiUrl, 9000));
+  if (!d || d.error || !Array.isArray(d.videos)) throw new Error("Bad API data");
+  const items = cleanList(d.videos.map(v => v && ({ id: v.id, title: v.title, published: v.published,
+    views: v.views, seconds: v.seconds, embeddable: v.embeddable !== false })));
+  if (!items.length) throw new Error("No videos");
+  return items;
+}
+
+/* ---------- Cache (one per list) ---------- */
+function readCache(){
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (!c || typeof c !== "object") return null;
+    const items = cleanList(c.items);
+    return items.length ? { t: Number(c.t) || 0, items, meta: cleanMeta(c.meta) } : null;
+  } catch(e){ return null; }
+}
+function writeCache(items, m){ try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), items, meta: m || null })); } catch(e){} }
+function dropCache(){ try { localStorage.removeItem(CACHE_KEY); } catch(e){} }
+
+/* ---------- Layout ---------- */
+function measure(){
+  const W = stage.clientWidth || 900;
+  const per = W >= 1100 ? 5.4 : W >= 820 ? 4.6 : W >= 560 ? 3.2 : 1.7;   // how many cards fit across
+  const gap = W >= 560 ? 18 : 12;
+  const cardW = Math.min(300, Math.max(150, (W - gap * (per - 1)) / per));
+  const cardH = Math.round(cardW * 1.38);
+  const scaleA = W >= 560 ? 1.14 : 1.08;
+  stage.style.height = Math.round(cardH * scaleA + 34) + "px";
+  return { W, gap, cardW, cardH, scaleA, reach: Math.ceil(per / 2) + 1 };
+}
+function offsetOf(i){
+  const n = cards.length; let d = i - active;
+  if (n > geo.reach * 2 + 1) { d = ((d % n) + n) % n; if (d > n / 2) d -= n; }   // shortest way round (loop)
+  return d;
+}
+function place(dragPx){
+  if (!geo) return;
+  const { W, gap, cardW, cardH, scaleA, reach } = geo;
+  const step = cardW + gap, push = cardW * (scaleA - 1) / 2;
+  cards.forEach((c, i) => {
+    const d = offsetOf(i);
+    const prev = c._d; c._d = d;
+    const far = Math.abs(d) > reach;
+    // a card jumping from one end to the other moves invisibly, without animating across
+    c.classList.toggle("instant", prev != null && Math.abs(prev - d) > reach * 2);
+    const x = W / 2 - cardW / 2 + d * step + Math.sign(d) * push + (dragPx || 0);
+    c.style.width = cardW + "px"; c.style.height = cardH + "px";
+    c.style.transform = "translate(" + x + "px,-50%) scale(" + (d === 0 ? scaleA : 1) + ")";
+    c.style.opacity = far ? 0 : (Math.abs(d) === reach ? .35 : 1);
+    c.style.zIndex = 100 - Math.abs(d);
+    c.style.pointerEvents = far ? "none" : "";
+    c.classList.toggle("active", d === 0);
+    c.tabIndex = d === 0 ? 0 : -1;
+    const nm = c.querySelector(".dz-name");
+    if (nm) nm.style.fontSize = nm.dataset.fs * cardW + "px";
+    const num = c.querySelector(".dz-num");
+    if (num) num.style.fontSize = Math.max(14, cardW * .1) + "px";
+  });
+}
+function relayout(){ geo = measure(); cards.forEach(c => c.classList.add("instant")); place();
+  requestAnimationFrame(() => cards.forEach(c => c.classList.remove("instant"))); }
+
+/* ---------- Render ---------- */
+function titleScale(t){       // font size as a fraction of card width
+  const L = t.length;
+  return L <= 6 ? .2 : L <= 10 ? .165 : L <= 16 ? .13 : L <= 26 ? .108 : .088;
+}
+function setBrand(tagline, title){
+  const b = $("dzBrand"); clear(b);
+  b.appendChild(document.createTextNode(CONFIG.name));
+  b.appendChild(el("small", "", tagline || " "));
+  const label = CONFIG.name + " " + (title || "music videos");
+  stage.setAttribute("aria-label", label);
+  document.title = label;
+}
+function brandFrom(m){ if (m) setBrand(m.tagline || m.title.toUpperCase(), m.title); }
+function showSkeleton(){
+  clear(track);
+  for (let i = 0; i < 9; i++) track.appendChild(el("div", "dz-card skel"));
+  cards = Array.from(track.children); videos = []; active = 4; relayout();
+}
+function thumb(id, size){ return "https://i.ytimg.com/vi/" + id + "/" + size + ".jpg"; }
+function card(v, i){
+  const t = shortTitle(v.title);
+  const c = el("div", "dz-card");
+  c.setAttribute("role", "button");
+  c.setAttribute("aria-label", v.title);
+  c.dataset.i = String(i);
+  const img = el("img");
+  img.alt = ""; img.draggable = false;
+  img.loading = i < 8 || i > videos.length - 4 ? "eager" : "lazy";
+  // YouTube returns a tiny grey placeholder when a high-res thumbnail does not exist
+  const fallback = () => { if (img.classList.contains("hq")) return; img.classList.add("hq"); img.src = thumb(v.id, "hqdefault"); };
+  img.addEventListener("load", () => { if (img.naturalWidth && img.naturalWidth <= 120) fallback(); });
+  img.addEventListener("error", fallback);
+  img.src = thumb(v.id, "maxresdefault");
+  c.appendChild(img);
+  if (v.seconds) c.appendChild(el("span", "dz-dur", fmtDuration(v.seconds)));
+  c.appendChild(el("span", "dz-play"));
+  const nm = el("div", "dz-name", t);
+  nm.dataset.fs = String(titleScale(t));
+  nm.appendChild(el("small", "", CONFIG.name.toUpperCase()));
+  c.appendChild(nm);
+  c.appendChild(el("div", "dz-num", pad2(i + 1)));
+  return c;
+}
+function render(items){
+  videos = CONFIG.maxVideos ? items.slice(0, CONFIG.maxVideos) : items.slice();
+  clear(track);
+  videos.forEach((v, i) => track.appendChild(card(v, i)));
+  cards = Array.from(track.children);
+  active = 0; cards.forEach(c => c._d = null); relayout(); updateInfo();
+}
+function setCount(a, n){
+  const c = $("dzCount"); clear(c);
+  c.appendChild(el("b", "", a));
+  c.appendChild(document.createTextNode(" / " + n));
+}
+function updateInfo(){
+  const v = videos[active]; if (!v) return;
+  $("dzTitle").textContent = v.title;
+  const parts = [];
+  if (v.seconds) parts.push(fmtDuration(v.seconds));
+  if (v.views != null && !isNaN(v.views)) parts.push(compact(v.views) + " views");
+  parts.push(timeAgo(v.published));
+  $("dzMeta").textContent = parts.filter(Boolean).join("  ·  ");
+  setCount(pad2(active + 1), pad2(videos.length));
+  $("dzBar").style.width = ((active + 1) / videos.length * 100) + "%";
+}
+function link(text, href){
+  const a = el("a", "", text);
+  a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+  return a;
+}
+/* A friendly message instead of an empty box. `href` is a checked youtube.com address or nothing. */
+function showMessage(text, href, retry){
+  videos = []; cards = []; active = 0;
+  if (!geo) geo = measure();
+  clear(track);
+  $("dzTitle").textContent = " "; $("dzMeta").textContent = " ";
+  setCount("00", "00"); $("dzBar").style.width = "0";
+  const box = el("div", "dz-msg"), inner = el("div");
+  inner.appendChild(el("p", "", text));
+  const row = el("div");
+  if (retry) {
+    const b = el("button", "dz-retry", "Try again");
+    b.type = "button";
+    b.addEventListener("click", () => start(true));
+    row.appendChild(b);
+  }
+  if (retry && href) row.appendChild(el("span", "dz-sep", "·"));
+  if (href) row.appendChild(link("Watch on YouTube ↗", href));
+  inner.appendChild(row);
+  box.appendChild(inner);
+  track.appendChild(box);
+}
+
+/* ---------- Navigation ---------- */
+function go(i){
+  if (!videos.length) return;
+  const n = videos.length;
+  active = ((i % n) + n) % n;
+  place(); updateInfo();
+}
+$("dzPrev").onclick = () => { go(active - 1); nudge(); };
+$("dzNext").onclick = () => { go(active + 1); nudge(); };
+$("dzPlay").onclick = () => openPlayer(active);
+document.addEventListener("keydown", e => {
+  if (modal.classList.contains("open")) {
+    if (e.key === "Escape") closePlayer();
+    return;
+  }
+  if (e.key === "ArrowLeft") { go(active - 1); nudge(); }
+  if (e.key === "ArrowRight") { go(active + 1); nudge(); }
+  if ((e.key === "Enter" || e.key === " ") && document.activeElement && document.activeElement.classList.contains("dz-card")) {
+    e.preventDefault(); openPlayer(active);
+  }
+});
+
+/* Drag / swipe */
+let drag = null;
+stage.addEventListener("pointerdown", e => {
+  if (!videos.length || e.button > 0) return;
+  drag = { x: e.clientX, y: e.clientY, dx: 0, moved: false, card: e.target.closest(".dz-card") };
+});
+window.addEventListener("pointermove", e => {
+  if (!drag) return;
+  drag.dx = e.clientX - drag.x;
+  if (!drag.moved && Math.abs(drag.dx) > 8 && Math.abs(drag.dx) > Math.abs(e.clientY - drag.y)) {
+    drag.moved = true; stage.classList.add("dragging"); cards.forEach(c => c.classList.add("instant"));
+  }
+  if (drag.moved) place(drag.dx);
+});
+window.addEventListener("pointerup", () => {
+  if (!drag) return;
+  const d = drag; drag = null; stage.classList.remove("dragging");
+  cards.forEach(c => c.classList.remove("instant"));
+  if (d.moved) {
+    const steps = Math.round(-d.dx / (geo.cardW + geo.gap)) || (Math.abs(d.dx) > 40 ? -Math.sign(d.dx) : 0);
+    go(active + steps); nudge();
+  } else if (d.card) {
+    const i = +d.card.dataset.i;
+    if (isNaN(i)) return;
+    if (i === active) openPlayer(i); else { go(i); nudge(); }
+  }
+});
+window.addEventListener("pointercancel", () => { if (drag) { drag = null; stage.classList.remove("dragging"); place(); } });
+
+/* Auto rotate (pauses on hover, while playing, and for a while after any interaction) */
+let timer = null, hold = 0, hovering = false;
+function nudge(){ hold = Date.now() + 12000; }
+function tick(){
+  if (!videos.length || hovering || drag || modal.classList.contains("open") || document.hidden || Date.now() < hold) return;
+  go(active + 1);
+}
+if (CONFIG.autoRotateSeconds > 0) timer = setInterval(tick, CONFIG.autoRotateSeconds * 1000);
+$("dz").addEventListener("mouseenter", () => hovering = true);
+$("dz").addEventListener("mouseleave", () => hovering = false);
+
+window.addEventListener("resize", () => { if (cards.length) relayout(); else geo = measure(); });
+
+/* ---------- Player ---------- */
+const modal = $("dzModal");
+function openPlayer(i){
+  const v = videos[i]; if (!v || !ID_RE.test(v.id)) return;
+  if (v.embeddable === false) { window.open(watchUrl(v.id), "_blank", "noopener,noreferrer"); return; }
+  if (i !== active) go(i);
+  const box = $("dzPlayer"); clear(box);
+  const f = document.createElement("iframe");
+  f.src = "https://www.youtube-nocookie.com/embed/" + v.id + "?autoplay=1&rel=0&playsinline=1&modestbranding=1";
+  f.title = v.title;
+  f.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen");
+  f.setAttribute("allowfullscreen", "");
+  f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+  box.appendChild(f);
+  $("dzNow").textContent = v.title;
+  $("dzExt").href = watchUrl(v.id);
+  modal.classList.add("open"); modal.setAttribute("aria-hidden", "false");
+}
+function closePlayer(){
+  modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true");
+  clear($("dzPlayer")); nudge();
+}
+$("dzClose").onclick = closePlayer;
+$("dzMPrev").onclick = () => { if (videos.length) openPlayer((active - 1 + videos.length) % videos.length); };
+$("dzMNext").onclick = () => { if (videos.length) openPlayer((active + 1) % videos.length); };
+modal.addEventListener("click", e => { if (e.target === modal) closePlayer(); });
+
+/* ---------- Start ---------- */
+function isFresh(c){ return !!c && Date.now() - c.t < CONFIG.cacheMinutes * 60000; }
+function same(a, b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+async function startChannel(force){
+  setBrand(CONFIG.tagline, "music videos");
+  const cached = force ? null : readCache();
+  if (cached) render(cached.items); else showSkeleton();
+  if (isFresh(cached)) return;
+  try {
+    const items = await loadChannel();
+    writeCache(items, null);
+    if (!cached || !same(cached.items, items)) render(items);
+  } catch(e) {
+    if (!cached) showMessage("Couldn't load the videos right now.", CHANNEL_URL + "/videos", true);
+  }
+}
+
+async function startList(force){
+  setBrand("", "");
+  if (!LIST_KEY) { showMessage("This playlist isn't available right now.", CHANNEL_URL + "/videos", false); return; }
+  const cached = readCache();
+  if (cached && !force) { meta = cached.meta; brandFrom(meta); render(cached.items); } else showSkeleton();
+  if (!force && isFresh(cached)) return;
+  const r = await loadPlaylist(LIST_KEY);
+  if (r.status === "ok") {
+    meta = r.meta; brandFrom(meta); writeCache(r.items, meta);
+    if (force || !cached || !same(cached.items, r.items)) render(r.items);
+    return;
+  }
+  if (r.status === "unknown") {
+    dropCache(); meta = null; setBrand("", "");
+    showMessage("This playlist isn't available right now.", CHANNEL_URL + "/videos", false);
+    return;
+  }
+  // The playlist failed to load: its own cache, else a link to that playlist (never the whole channel).
+  if (cached) {
+    if (force) { meta = cached.meta; brandFrom(meta); render(cached.items); }
+    return;
+  }
+  meta = r.meta; brandFrom(meta);
+  const pid = meta && meta.playlist_id;
+  showMessage("Couldn't load the videos right now.", pid ? playlistUrl(pid) : "", true);
+}
+
+function start(force){ $("dzSub").href = CHANNEL_URL + "?sub_confirmation=1"; return LIST_MODE ? startList(force) : startChannel(force); }
+start();
+</script>
+</body>
+</html>
